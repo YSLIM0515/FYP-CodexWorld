@@ -29,6 +29,12 @@ public class GameController : MonoBehaviour
     public UnityEngine.UI.Button hintButton;
     public UnityEngine.UI.Text hintLabel;
 
+    [Header("Celebration")]
+    [Tooltip("Particle prefab spawned on the goal tile when a level is solved.")]
+    public GameObject winEffect;
+    [Tooltip("Run summary shown after the last challenge map is cleared.")]
+    public ChallengeSummary challengeSummary;
+
     int _levelIndex;
     LevelDefinition _level;
     readonly List<CommandToken> _queue = new List<CommandToken>();
@@ -48,6 +54,12 @@ public class GameController : MonoBehaviour
     bool _hintUsedThisMap;       // any hint caps the map at 2 stars
     bool _freeHint;              // granted after 2 fails on the same map
     int _failsThisMap;
+
+    // Run-wide challenge totals, for the end-of-run summary.
+    int _runStars;
+    int _runCleared;
+    int _runHints;
+    float _runStartTime;
 
     int CurrentBudget => _challenge && _challengeMaps != null ? _challengeMaps[_levelIndex].Budget : int.MaxValue;
 
@@ -75,6 +87,7 @@ public class GameController : MonoBehaviour
     void SetupChallenge()
     {
         var template = levels[levels.Length - 1];
+        _runStartTime = Time.time;
         int seed = System.Environment.TickCount & 0xFFFFF;
         var maps = ChallengeGenerator.GenerateRun(seed);
         var parent = new GameObject("ChallengeLevels").transform;
@@ -151,6 +164,19 @@ public class GameController : MonoBehaviour
         ColorBlindMode.Refresh();
     }
 
+    // Burst of particles on the goal tile, so the win lands in the world and
+    // not only in the UI panel.
+    void PlayWinEffect()
+    {
+        if (winEffect == null || _level == null) return;
+        Transform goal = null;
+        foreach (var marker in _level.GetComponentsInChildren<CellMarker>(true))
+            if (marker.type == CellType.Goal) { goal = marker.transform; break; }
+        if (goal == null) return;
+        var fx = Instantiate(winEffect, goal.position + Vector3.up * 0.6f, Quaternion.identity);
+        Destroy(fx, 6f); // safety net; CFXR prefabs also self-destruct
+    }
+
     public void GoPrev()
     {
         if (_isRunning || _levelIndex == 0) return;
@@ -165,6 +191,15 @@ public class GameController : MonoBehaviour
         // — the run is complete, so send the player home.
         if (target >= levels.Length)
         {
+            // A finished challenge run leaves no saved progress, so show the
+            // summary before leaving — otherwise the run vanishes without trace.
+            if (_challenge && challengeSummary != null)
+            {
+                ui.HideResultPanels();
+                challengeSummary.Show(_runCleared, levels.Length, _runStars, _runHints,
+                                      Time.time - _runStartTime, _challengeMaps[0].Seed);
+                return;
+            }
             ReturnToMenu();
             return;
         }
@@ -355,8 +390,14 @@ public class GameController : MonoBehaviour
                           : $"SECTOR CLEARED! {levels.Length - 1 - _levelIndex} corrupted sector(s) remain.")
                 : (isLast ? "NULL VIRUS PURGED! All regions of Codex World are restored."
                           : "EXCELLENT WORK! You reached the data beacon.");
-            if (_challenge) _challengeUnlocked = Mathf.Max(_challengeUnlocked, _levelIndex + 1);
+            if (_challenge)
+            {
+                _challengeUnlocked = Mathf.Max(_challengeUnlocked, _levelIndex + 1);
+                _runCleared = Mathf.Max(_runCleared, _levelIndex + 1);
+                _runStars += stars;
+            }
             else ProgressManager.SetStars(_levelIndex, stars);
+            PlayWinEffect();
             ui.SetStatusGood("SYSTEM RESTORED!" + (bonus ? "  (optimal solution!)" : ""));
             ui.ShowWin(stars, gained, isLast, msg);
             ScanQueue(out bool wLoop, out bool wIf);
@@ -460,6 +501,7 @@ public class GameController : MonoBehaviour
         }
 
         _hintTier++;
+        _runHints++;             // run total, for the summary
         _hintUsedThisMap = true; // star cap
         if (free) _freeHint = false; else _hintTokens--;
         UpdateHintLabel();

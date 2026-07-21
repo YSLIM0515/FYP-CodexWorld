@@ -22,8 +22,8 @@ to work.
 
 | Region | Levels |
 | --- | --- |
-| Sequence Valley | First Steps, The Turn, The Perimeter |
-| Loop Factory | Conveyor Run, Gear Steps, Winding Path |
+| Sequence Valley | First Steps, The Turn, Winding Path |
+| Loop Factory | Conveyor Run, Gear Steps, The Perimeter |
 | Logic Forest | Fork in the Woods, Shifting Maze, Null Virus Core |
 
 **Challenge mode** — unlocked after finishing all 9 beginner levels. Generates 5 procedural
@@ -36,6 +36,11 @@ fits. This forces the player to actually use loops rather than brute-force a pat
 A 3-tier hint system keeps it fair: hints cost tokens (3 per run), escalating from a glowing
 path, to a structural description, to the first few solution tokens. A free hint is offered
 after two failures on the same map. Using a hint caps that map at 2 stars.
+
+Clearing the last map opens a **run summary** — sectors cleared, stars earned, hints spent,
+run time, a letter grade, and the run seed. Challenge mode deliberately writes no progress or
+achievements, so this panel is the only record a run happened; the seed identifies it when
+comparing playtests.
 
 ## Progression and feedback
 
@@ -121,6 +126,7 @@ generator scripts (the old builder tooling has been removed).
 - `UI/ProfilePanel.cs`, `UI/GameProfile.cs`, `UI/LevelNumberDisplay.cs` — player profile.
 - `UI/SettingsPanel.cs`, `UI/GameSettings.cs` — settings UI and persistence.
 - `UI/UnlockToast.cs`, `UI/ScreenFader.cs` — unlock banners and scene transitions.
+- `UI/ChallengeSummary.cs` — end-of-run stats panel for challenge mode.
 
 ## Accessibility
 
@@ -137,8 +143,8 @@ generator scripts (the old builder tooling has been removed).
 
 ## Known gaps
 
-- The **language dropdown** in Settings is saved but not applied — no localisation yet.
-- Challenge mode ends without a run-summary screen.
+- The **language dropdown** in Settings is saved but not applied — no localisation strings
+  exist yet, so the options are placeholders.
 
 ## Documentation
 
