@@ -1,103 +1,139 @@
 # Codex World (3D) — FYP Project
 
-Educational puzzle adventure game teaching programming fundamentals (sequences, loops, conditionals) through command-based puzzles, per the FYP proposal. This is the 3D god-view version; the earlier 2D prototype lives in `../CodexWorld2D`.
+Educational puzzle adventure game teaching programming fundamentals — sequences, loops, and
+conditionals — through command-queue puzzles. The player programs a robot to reach a data
+beacon by queueing commands, then runs the sequence and watches it execute. This is the 3D
+god-view version; the earlier 2D prototype lives in `../CodexWorld2D`.
 
-## First-time setup (run once)
+**Unity 6000.5.1f1**, Universal Render Pipeline.
 
-1. Open this project in **Unity 6000.5.1f1** and open `Assets/Scenes/CodexWorld`.
-2. In the menu bar, click **Tools > Codex World > Build Scene Content**.
-   This generates everything as real, editable objects in the Hierarchy: the 9 level layouts, AXIOM, the UI canvas, the camera controller, and material assets under `Assets/Materials/CodexWorld`.
-3. **Save the scene (Ctrl+S).**
+## Running the project
 
-After that, just press **Play**. Nothing is created at runtime — what you see in the Hierarchy is the game.
+1. Open the project in Unity **6000.5.1f1**.
+2. Open `Assets/Scenes/MainMenu` and press **Play**.
 
-### Main menu (draft)
+Both scenes are authored and saved — nothing is generated at runtime or by an editor tool.
+What you see in the Hierarchy is the game. `MainMenu` and `CodexWorld` are both registered
+under **File > Build Settings** (MainMenu at index 0), which is required for scene switching
+to work.
 
-Open `Assets/Scenes/MainMenu`, then click **Tools > Codex World > Build Main Menu** to
-generate a draft menu (title, PLAY/CHALLENGES/LEADERBOARD/CODEX/SETTINGS/EXIT column,
-and a top-right profile card) as editable Hierarchy objects. Save the scene afterwards.
-It uses placeholder colours/fonts and Unity's built-in font — swap the `Background`
-and `Avatar` images and restyle freely once the real art is ready. `PLAY` loads the
-`CodexWorld` scene (add both scenes under **File > Build Settings**); the other buttons
-are placeholders. Wiring lives on the `MenuCanvas`'s **MainMenuController** component.
+### Standalone build
 
-### Settings screen (main menu + in-game)
+**File > Build Settings > Build**, target Windows x64. The last build was verified to launch
+with no runtime errors. Output is git-ignored.
 
-A reusable settings overlay (AUDIO volume sliders, DISPLAY resolution/fullscreen,
-LANGUAGE, ACCESSIBILITY, and SAVE / CANCEL / RESTORE DEFAULTS). Build it per scene:
+## Game structure
 
-1. In **MainMenu**: run **Build Main Menu** first, then **Tools > Codex World >
-   Build Settings Panel** — it auto-wires the panel to the `SETTINGS` button.
-2. In **CodexWorld**: run **Build Settings Panel** too — since there's no menu
-   controller there, it adds a small ⚙ gear button (top-right) that opens the panel.
-3. Save each scene.
+**Beginner mode** — 9 hand-authored levels across 3 regions, each introducing one concept:
 
-Behaviour: **SAVE** persists settings (PlayerPrefs via `GameSettings`), **CANCEL**
-closes without saving, **RESTORE DEFAULTS** resets the controls to defaults (75/50/90
-volumes) — persisted on the next SAVE. Master volume previews live while dragging.
-Logic is on the `SettingsPanel` component; values are stored/applied by `GameSettings`.
+| Region | Levels |
+| --- | --- |
+| Sequence Valley | First Steps, The Turn, The Perimeter |
+| Loop Factory | Conveyor Run, Gear Steps, Winding Path |
+| Logic Forest | Fork in the Woods, Shifting Maze, Null Virus Core |
 
-### Achievements screen (main menu, display-only draft)
+**Challenge mode** — unlocked after finishing all 9 beginner levels. Generates 5 procedural
+maps per run, different every time. Maps are drawn from five archetypes (Serpentine, Spiral,
+Minefield, Maze, Gauntlet) and every one is verified solvable before it is shown: a BFS solver
+finds the optimal route, a dynamic-programming pass compresses it into loops, and the map is
+only accepted if a flat sequence would exceed the command budget while the compressed solution
+fits. This forces the player to actually use loops rather than brute-force a path.
 
-In **MainMenu** (after Build Main Menu): run **Tools > Codex World > Build Achievements
-Screen**, then save. It generates the template as editable objects under `MenuCanvas`:
-Bronze/Silver/Gold tier rows (horizontal `ScrollRect`s of achievement cards), greyscale
-locked cards with a rect-built padlock, an overall progress bar (% + fraction), a
-gold-accented "Recently Unlocked" panel with timestamps, and a tip bar with an ESC/Back
-button. The menu's **CHALLENGES** button opens it (retargeted by the builder).
-All achievements are coding-themed placeholders ("Hello World" — solve your first
-puzzle, "Loop Learner", "Logic Master", ...) baked into the scene — pure display, not
-linked to gameplay yet. `AchievementsScreen.SetProgress()` is ready for the real system.
+A 3-tier hint system keeps it fair: hints cost tokens (3 per run), escalating from a glowing
+path, to a structural description, to the first few solution tokens. A free hint is offered
+after two failures on the same map. Using a hint caps that map at 2 stars.
 
-### Profile panel (main menu)
+## Progression and feedback
 
-In **MainMenu** (after Build Main Menu): run **Tools > Codex World > Build Profile
-Panel**, then save. Clicking the **avatar** on the profile card opens the editor over
-a dark overlay (draft stand-in for a background blur): edit the **profile name**
-(input field), pick a **profile icon** (6 placeholder options), and tick up to 3
-**badges** (coding achievements) to display. **SAVE** persists everything
-(PlayerPrefs via `GameProfile`) and refreshes the card — name, avatar icon, and a
-mini badge strip under the card; **BACK** cancels to the main menu. Logic is on the
-`ProfilePanel` component; identity data lives in `GameProfile`.
+- **XP** — +100 per level completion, +50 bonus at or below the optimal command count.
+- **Stars** — 1 for completing, 2 for hitting the optimal token count, 3 for no failed runs.
+- **Achievements** — 18 coding-themed unlocks across Bronze/Silver/Gold tiers.
+- **Codex** — an 8-entry guidebook (Sequences, Loops, Nested Loops, Conditionals, Boolean
+  Logic, Debugging, Optimization, Algorithms), each with a real-world industry example.
+  Entries unlock from live gameplay rules rather than being handed out.
+- **Tutorial** — three contextual lessons that fire when a feature first appears: basics on
+  level 1, loops when loops unlock, conditionals when they unlock.
+- **Unlock toasts** — achievements and new codex entries announce themselves the moment they
+  unlock instead of waiting to be discovered in a menu.
+- **Analytics** — every run is appended to `codexworld_analytics.csv` in
+  `Application.persistentDataPath` (mode, level, result, attempt, time, tokens, whether loops
+  or conditionals were used, hints, stars) for evaluating the game with real playtest data.
 
-Note: **Build Main Menu** recreates `MenuCanvas`, so if you re-run it you must re-run
-**Build Settings Panel**, **Build Achievements Screen**, and **Build Profile Panel**
-afterwards.
+All progress persists through `PlayerPrefs` under `cw_*` keys. **Reset Save** in the in-game
+menu clears everything, including tutorial and codex-toast flags, so a fresh run behaves like
+a first install.
 
 ## Editing the game visually
 
-- **Levels** (under `Levels/Level1_FirstSteps` … `Level9_NullVirusCore`): the scene is the source of truth.
-  - Move/add/delete ground tiles under `Tiles` to change the grid size.
-  - Move a `Corrupted_x_y` cube (or duplicate one) to change obstacles — its `CellMarker` follows its position.
-  - Move the `Goal` or `Spawn` objects to relocate them; `Spawn`'s CellMarker also sets AXIOM's starting direction.
-  - Select the level root to edit its name, story, hint, allowed commands, optimal command count, and camera background in the **LevelDefinition** inspector.
-- **AXIOM**: edit its meshes/scale directly; playback speeds are on its **PlayerAvatar** component.
-- **Camera**: angles/speeds on the **GodViewCamera** component of Main Camera.
-- **UI**: all texts/buttons are under `GameCanvas` — restyle freely; the **GameUI** component just references them.
-  Button behaviour lives in each button's **OnClick()** list (Inspector), targeting
-  `GameController`'s public handlers. After script changes, **Tools > Codex World >
-  Wire Game Buttons (OnClick)** re-fills the lists without rebuilding the scene.
-- **GameController**: level order, start level, and XP values.
-- **Materials**: `Assets/Materials/CodexWorld` — recolor regions, goal, AXIOM.
+The scene is the source of truth — edit objects directly in the Unity editor, not through
+generator scripts (the old builder tooling has been removed).
 
-Re-running the build tool resets the generated objects to defaults, so only re-run it if you want a fresh start.
+- **Levels** (`Levels/Level1_FirstSteps` … `Level9_NullVirusCore`):
+  - Add/move/delete ground tiles under `Tiles` to change the grid.
+  - Move or duplicate an obstacle to change the puzzle — its `CellMarker` follows its position.
+  - Move `Goal` or `Spawn` to relocate them; `Spawn`'s CellMarker also sets the start facing.
+  - Select the level root to edit its name, story, hint, allowed commands, optimal command
+    count, and camera background in the **LevelDefinition** inspector.
+- **Player robot** — edit meshes/scale directly; playback speeds are on **PlayerAvatar**.
+- **Obstacles** — the virus crystals use a procedural mesh; glow and animation are tunable on
+  the **CorruptedBlock** component, and the material is
+  `Assets/Materials/CodexWorld/Obstacle_Corrupted.mat` (Smoothness / Emission).
+- **Camera** — angles and speeds on **GodViewCamera** (Main Camera).
+- **UI** — everything lives under `GameCanvas` / `MenuCanvas`; restyle freely. Button behaviour
+  is in each button's **OnClick()** list in the Inspector, targeting public handler methods.
+- **Audio** — `GameAudioMixer` (`Assets/Design/Resources`) has Master → Music / SFX groups with
+  exposed `MusicVol` / `SFXVol` parameters, so the settings sliders attenuate independently.
+  Music, click sounds, win/fail stingers and slider ticks are all wired through Inspector
+  components — no audio code to maintain.
+- **Animation** — `Assets/Animations` holds the screen fade and level-badge pulse clips; timings
+  are editable in the Animation window.
 
 ## Controls (Play mode)
 
-- Click command buttons to build a sequence; **RUN** executes it; **Undo/Clear** edit the queue.
-- **Left-click drag** rotates the god-view camera (horizontal = orbit, vertical = tilt); **right-click drag** moves the view up/down; **mouse scroll** zooms.
-- **< / >** (top left) navigate unlocked levels; **Reset Save** wipes progress.
-- XP: +100 per level completion, +50 bonus at/below the optimal command count (PlayerPrefs).
+- Click command buttons to build a sequence; **RUN** executes it; **Undo / Clear** edit the queue.
+- **Left-drag** orbits the god-view camera, **right-drag** pans, **scroll** zooms.
+- **&lt; / &gt;** navigate unlocked levels; **ESC** opens the pause menu.
 
 ## Code map (`Assets/Scripts`)
 
-- `Core/CommandInterpreter.cs` — parses the command queue into a tree and executes it (nested loops/conditionals, bounds checks, goal-halt).
-- `Core/InterpreterTests.cs` — optional: attach to any GameObject to run 9 interpreter tests in the Console.
-- `Level/LevelDefinition.cs` — per-level info; reads the puzzle grid from the level's child objects.
-- `Level/CellMarker.cs` — marks an object's cell as Obstacle / Goal / Spawn.
-- `Game/PlayerAvatar.cs` — AXIOM playback/win/fail animations.
+**Core**
+- `Core/CommandInterpreter.cs` — parses the command queue into a tree and executes it
+  (nested loops/conditionals, bounds checks, goal-halt).
+- `GameController.cs` — queue building, level flow, execution playback, win/fail handling,
+  challenge state, hints, achievement evaluation.
+
+**Level**
+- `Level/LevelDefinition.cs` — per-level data; reads the puzzle grid from child objects.
+- `Level/CellMarker.cs` — marks a cell as Obstacle / Goal / Spawn.
+- `Level/ChallengeGenerator.cs` — procedural map generation, BFS solver, loop-compression DP.
+- `Level/ChallengeLevelBuilder.cs` — turns a generated map into runtime level objects.
+- `Level/CorruptedBlock.cs` — obstacle visuals (pulsing emission, per-instance variation).
+
+**Game**
+- `Game/PlayerAvatar.cs` — robot movement, turn and win/fail animation.
 - `Game/GodViewCamera.cs` — orbiting top-down camera (new Input System).
-- `Game/ProgressManager.cs` — XP, completion, and unlock persistence.
-- `UI/GameUI.cs` — references to the scene-authored UI controls.
-- `GameController.cs` — game controller: queue, level flow, execution playback.
-- `../Editor/CodexWorldSceneBuilder.cs` — the one-time scene generator (Tools menu).
+- `Game/ProgressManager.cs` — XP, completion, stars, unlock persistence.
+- `Game/AchievementManager.cs` — 18 achievement definitions and unlock state.
+- `Game/AnalyticsLogger.cs` — CSV playtest logging.
+
+**UI**
+- `UI/GameUI.cs`, `UI/PauseMenu.cs`, `UI/MainMenuController.cs` — scene UI references and menus.
+- `UI/GameModeScreen.cs` — beginner / challenge mode select with lock state.
+- `UI/TutorialGuide.cs` — contextual lessons.
+- `UI/CodexLibrary.cs`, `UI/CodexScreen.cs` — guidebook content and reader UI.
+- `UI/AchievementsScreen.cs`, `UI/AchievementCard.cs` — achievements screen.
+- `UI/StudentJourneyScreen.cs` — per-region mastery dashboard.
+- `UI/ProfilePanel.cs`, `UI/GameProfile.cs`, `UI/LevelNumberDisplay.cs` — player profile.
+- `UI/SettingsPanel.cs`, `UI/GameSettings.cs` — settings UI and persistence.
+- `UI/UnlockToast.cs`, `UI/ScreenFader.cs` — unlock banners and scene transitions.
+
+## Known gaps
+
+- The **colour-blind toggle** and **language dropdown** in Settings are saved but not yet
+  applied to anything.
+- Challenge mode ends without a run-summary screen.
+
+## Documentation
+
+- `Docs/ChallengeMode-Plan.md` — challenge mode design: difficulty model, archetypes, the
+  dual-optimal budget rule, and the hint system.
