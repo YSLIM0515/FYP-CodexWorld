@@ -57,6 +57,8 @@ public class SettingsPanel : MonoBehaviour
         if (masterSlider) masterSlider.onValueChanged.AddListener(v => { SetLabel(masterValue, v); AudioListener.volume = v; });
         if (musicSlider) musicSlider.onValueChanged.AddListener(v => { SetLabel(musicValue, v); GameSettings.SetMixerVolume("MusicVol", v); });
         if (sfxSlider) sfxSlider.onValueChanged.AddListener(v => { SetLabel(sfxValue, v); GameSettings.SetMixerVolume("SFXVol", v); });
+        // Colour-blind mode previews live so the player can see the board change.
+        if (colorBlindToggle) colorBlindToggle.onValueChanged.AddListener(ColorBlindMode.Apply);
 
         Hide();
     }

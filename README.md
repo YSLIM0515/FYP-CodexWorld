@@ -109,6 +109,7 @@ generator scripts (the old builder tooling has been removed).
 - `Game/ProgressManager.cs` — XP, completion, stars, unlock persistence.
 - `Game/AchievementManager.cs` — 18 achievement definitions and unlock state.
 - `Game/AnalyticsLogger.cs` — CSV playtest logging.
+- `Game/ColorBlindMode.cs` — accessibility repaint of the gameplay-critical colours.
 
 **UI**
 - `UI/GameUI.cs`, `UI/PauseMenu.cs`, `UI/MainMenuController.cs` — scene UI references and menus.
@@ -121,10 +122,22 @@ generator scripts (the old builder tooling has been removed).
 - `UI/SettingsPanel.cs`, `UI/GameSettings.cs` — settings UI and persistence.
 - `UI/UnlockToast.cs`, `UI/ScreenFader.cs` — unlock banners and scene transitions.
 
+## Accessibility
+
+- **Colour-blind mode** (Settings > Accessibility) repaints the three gameplay-critical
+  elements onto a blue/orange axis, which survives every common form of colour vision
+  deficiency: obstacles become amber, the goal becomes cyan, and ground and decor are
+  desaturated so nothing competes with them. By default the goal is green and sits on green
+  grass — the classic red-green failure case. The elements are also separated by brightness,
+  so the board still reads in full monochromacy. Materials are instanced at runtime, so the
+  shared `.mat` assets are never modified.
+- **Status messages** lead with a glyph (`✓` / `✗` / `›`) so success and failure never depend
+  on colour alone (WCAG 1.4.1). In colour-blind mode the red/green pair also becomes
+  amber/cyan, matching the board.
+
 ## Known gaps
 
-- The **colour-blind toggle** and **language dropdown** in Settings are saved but not yet
-  applied to anything.
+- The **language dropdown** in Settings is saved but not applied — no localisation yet.
 - Challenge mode ends without a run-summary screen.
 
 ## Documentation

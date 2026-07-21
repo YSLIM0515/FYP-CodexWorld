@@ -37,6 +37,7 @@ public static class GameSettings
         Language = PlayerPrefs.GetInt(KLang, DefLanguage);
         ColorBlind = PlayerPrefs.GetInt(KCb, DefColorBlind ? 1 : 0) == 1;
         ApplyAudio();
+        ApplyAccessibility();
     }
 
     // Writes the current in-memory values and applies them.
@@ -52,6 +53,7 @@ public static class GameSettings
         PlayerPrefs.SetInt(KCb, ColorBlind ? 1 : 0);
         PlayerPrefs.Save();
         ApplyAudio();
+        ApplyAccessibility();
         ApplyDisplay();
     }
 
@@ -85,6 +87,8 @@ public static class GameSettings
         if (Mixer != null)
             Mixer.SetFloat(param, linear > 0.0001f ? Mathf.Log10(linear) * 20f : -80f);
     }
+
+    public static void ApplyAccessibility() => ColorBlindMode.Apply(ColorBlind);
 
     public static void ApplyDisplay()
     {

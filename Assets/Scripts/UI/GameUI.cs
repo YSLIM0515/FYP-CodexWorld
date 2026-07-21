@@ -122,9 +122,40 @@ public class GameUI : MonoBehaviour
 
     // ---------------- Status & readouts ----------------
 
-    public void SetStatus(string msg) { status.text = msg; status.color = new Color(1f, 0.9f, 0.4f); }
-    public void SetStatusGood(string msg) { status.text = msg; status.color = new Color(0.4f, 1f, 0.55f); }
-    public void SetStatusBad(string msg) { status.text = msg; status.color = new Color(1f, 0.45f, 0.4f); }
+    // Status messages lead with a glyph so success/failure survives without
+    // colour: red and green are the pair red-green colour blindness cannot
+    // separate, and this line is the game's main feedback channel (WCAG 1.4.1 —
+    // colour must never be the only carrier of meaning). Colour-blind mode also
+    // swaps that pair for the cyan/amber used on the board.
+    string _statusGlyph = "›", _statusMsg = "";
+    int _statusKind;   // 0 neutral, 1 good, 2 bad
+
+    public void SetStatus(string msg) => ShowStatus("›", msg, 0);
+    public void SetStatusGood(string msg) => ShowStatus("✓", msg, 1);
+    public void SetStatusBad(string msg) => ShowStatus("✗", msg, 2);
+
+    void ShowStatus(string glyph, string msg, int kind)
+    {
+        _statusGlyph = glyph;
+        _statusMsg = msg;
+        _statusKind = kind;
+        RefreshStatus();
+    }
+
+    // Re-applies the current message in the current palette; also called when
+    // colour-blind mode is toggled so the visible line updates immediately.
+    public void RefreshStatus()
+    {
+        if (status == null) return;
+        status.text = $"{_statusGlyph}  {_statusMsg}";
+        bool cb = ColorBlindMode.Enabled;
+        status.color = _statusKind switch
+        {
+            1 => cb ? new Color(0.35f, 0.85f, 1f) : new Color(0.4f, 1f, 0.55f),
+            2 => cb ? new Color(1f, 0.6f, 0.1f) : new Color(1f, 0.45f, 0.4f),
+            _ => cb ? new Color(0.95f, 0.95f, 0.95f) : new Color(1f, 0.9f, 0.4f)
+        };
+    }
     public void SetQueue(string text) => queueText.text = text;
     public void RefreshXP() => xpText.text = $"XP: {ProgressManager.TotalXP}";
 }

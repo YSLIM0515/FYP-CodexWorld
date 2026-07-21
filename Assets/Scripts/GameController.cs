@@ -145,6 +145,10 @@ public class GameController : MonoBehaviour
         // Contextual tutorial: teaches whatever this level just unlocked.
         if (_tutorial == null) _tutorial = FindAnyObjectByType<TutorialGuide>();
         if (_tutorial != null) _tutorial.OnLevelLoaded(_level, _challenge);
+
+        // Repaint for colour-blind mode: this level's objects (or a freshly
+        // built challenge map) only just became active.
+        ColorBlindMode.Refresh();
     }
 
     public void GoPrev()
