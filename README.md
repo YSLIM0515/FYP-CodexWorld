@@ -2,8 +2,7 @@
 
 Educational puzzle adventure game teaching programming fundamentals — sequences, loops, and
 conditionals — through command-queue puzzles. The player programs a robot to reach a data
-beacon by queueing commands, then runs the sequence and watches it execute. This is the 3D
-god-view version; the earlier 2D prototype lives in `../CodexWorld2D`.
+beacon by queueing commands, then runs the sequence and watches it execute. 
 
 **Unity 6000.5.1f1**, Universal Render Pipeline.
 
@@ -16,11 +15,6 @@ Both scenes are authored and saved — nothing is generated at runtime or by an 
 What you see in the Hierarchy is the game. `MainMenu` and `CodexWorld` are both registered
 under **File > Build Settings** (MainMenu at index 0), which is required for scene switching
 to work.
-
-### Standalone build
-
-**File > Build Settings > Build**, target Windows x64. The last build was verified to launch
-with no runtime errors. Output is git-ignored.
 
 ## Game structure
 
