@@ -4,16 +4,18 @@
 // editor as REAL, editable objects under MenuCanvas:
 //   - dark overlay behind the window (draft stand-in for a background blur)
 //   - PROFILE NAME input field
-//   - PROFILE ICON row (6 selectable placeholder icons)
+//   - PROFILE ICON row (5 avatar portraits sliced from playerAvatar.png)
 //   - BADGES toggles (first 3 ticked show on the profile card)
 //   - SAVE (persist + refresh card) and BACK (cancel to main menu) buttons
 // Also makes the profile-card avatar clickable (opens the panel) and adds a
 // mini badge strip under the card. All buttons wired via OnClick() lists.
 // Safe to re-run.
 
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.Events;
 using UnityEditor.SceneManagement;
+using UnityEditor.U2D.Sprites;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -33,6 +35,9 @@ public static class ProfilePanelBuilder
 
     static DefaultControls.Resources Res => new DefaultControls.Resources();
 
+    // settingPanel.png UI kit, loaded by Build().
+    static Dictionary<string, Sprite> S;
+
     [MenuItem("Tools/Codex World/Build Profile Panel")]
     public static void Build()
     {
@@ -44,6 +49,12 @@ public static class ProfilePanelBuilder
             return;
         }
         var canvas = canvasGO.transform;
+
+        var avatars = LoadAvatarSprites();
+        if (avatars == null) return;
+        var badges = LoadBadgeSprites();
+        if (badges == null) return;
+        if (!LoadKit()) return;
 
         var old = canvas.Find("ProfilePanel");
         if (old != null) Object.DestroyImmediate(old.gameObject);
@@ -64,8 +75,9 @@ public static class ProfilePanelBuilder
         var dim = Panel(c, "BlurOverlay", DimCol, Stretch);
         dim.raycastTarget = true;
 
-        var window = Panel(c, "Window", WindowCol, r => Center(r, WW, WH));
-        Outline(window.gameObject, Cyan);
+        var window = Panel(c, "Window", Color.white, r => Center(r, WW, WH));
+        window.sprite = S["SP_Frame_Window"];
+        window.type = Image.Type.Sliced;
         var w = window.transform;
 
         var title = Text(w, "Title", "EDIT PROFILE", 30, TextAnchor.MiddleCenter, Cyan, FontStyle.Bold);
@@ -77,27 +89,30 @@ public static class ProfilePanelBuilder
 
         // ---- Profile icon ----
         SectionHeader(w, 176, "PROFILE ICON");
-        panel.iconOptions = new Button[GameProfile.IconGlyphs.Length];
-        for (int i = 0; i < GameProfile.IconGlyphs.Length; i++)
+        panel.avatarSprites = avatars;
+        panel.iconOptions = new Button[avatars.Length];
+        for (int i = 0; i < avatars.Length; i++)
         {
-            panel.iconOptions[i] = BuildIconOption(w, i);
+            panel.iconOptions[i] = BuildIconOption(w, i, avatars[i]);
             UnityEventTools.AddIntPersistentListener(panel.iconOptions[i].onClick, panel.SelectIcon, i);
         }
 
         // ---- Badges ----
-        SectionHeader(w, 320, "BADGES   (first 3 ticked are shown)");
+        SectionHeader(w, 320, "BADGES   (unlock achievements to earn - first 3 ticked are shown)");
+        panel.badgeSprites = badges;
         panel.badgeToggles = new Toggle[GameProfile.BadgeNames.Length];
+        panel.badgeLabels = new Text[GameProfile.BadgeNames.Length];
         for (int i = 0; i < GameProfile.BadgeNames.Length; i++)
-            panel.badgeToggles[i] = BuildBadgeToggle(w, i);
+            panel.badgeToggles[i] = BuildBadgeToggle(w, i, badges[i], out panel.badgeLabels[i]);
 
-        // ---- Save / Back ----
-        panel.saveButton = BottomButton(w, -115, "SAVE", SaveCol);
-        panel.backButton = BottomButton(w, 115, "BACK", NeutralBtn);
+        // ---- Save / Back (kit buttons; the art has the labels baked in) ----
+        panel.saveButton = BottomButton(w, -115, "SAVE", S["SP_Btn_Save"], S["SP_Btn_Save_Hi"]);
+        panel.backButton = BottomButton(w, 115, "BACK", S["SP_Btn_Cancel"], S["SP_Btn_Cancel_Hi"]);
         UnityEventTools.AddPersistentListener(panel.saveButton.onClick, panel.Save);
         UnityEventTools.AddPersistentListener(panel.backButton.onClick, panel.Close);
 
         // ---- Make the profile-card avatar open the panel ----
-        WireAvatarAndCard(menu, panel);
+        WireAvatarAndCard(menu, panel, avatars);
 
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
         Selection.activeGameObject = rootGO;
@@ -106,7 +121,7 @@ public static class ProfilePanelBuilder
 
     // ---------------- Profile card hookup ----------------
 
-    static void WireAvatarAndCard(MainMenuController menu, ProfilePanel panel)
+    static void WireAvatarAndCard(MainMenuController menu, ProfilePanel panel, Sprite[] avatars)
     {
         panel.cardNameText = menu.playerNameText;
         panel.cardAvatar = menu.avatar;
@@ -121,16 +136,16 @@ public static class ProfilePanelBuilder
             UnityEventTools.AddPersistentListener(btn.onClick, panel.Open);
             EditorUtility.SetDirty(btn);
 
-            // Re-purpose the "AVATAR" hint text as the icon glyph.
-            var hint = avatarGO.transform.Find("Hint");
-            Text glyph = hint != null ? hint.GetComponent<Text>() : null;
-            if (glyph == null)
-                glyph = Text(avatarGO.transform, "Glyph", "</>", 26, TextAnchor.MiddleCenter, Color.black, FontStyle.Bold);
-            glyph.fontSize = 26;
-            glyph.fontStyle = FontStyle.Bold;
-            glyph.color = new Color(0f, 0f, 0f, 0.8f);
-            Stretch(glyph.rectTransform);
-            panel.cardAvatarGlyph = glyph;
+            // Real portrait on the card now; drop the old hint/glyph placeholder.
+            menu.avatar.sprite = avatars[0];
+            menu.avatar.color = Color.white;
+            menu.avatar.preserveAspect = true;
+            foreach (var childName in new[] { "Hint", "Glyph" })
+            {
+                var t = avatarGO.transform.Find(childName);
+                if (t != null) Object.DestroyImmediate(t.gameObject);
+            }
+            panel.cardAvatarGlyph = null;
 
             // Mini badge strip hanging under the card.
             var card = menu.avatar.transform.parent;
@@ -165,6 +180,127 @@ public static class ProfilePanelBuilder
         EditorUtility.SetDirty(menu);
     }
 
+    // ---------------- Avatar sprite sheet ----------------
+
+    const string AvatarSheet = "Assets/Design/Image/playerAvatar.png";
+    // Portrait plate rects measured from the 1536x1024 sheet (bottom-based y).
+    static readonly int[] AvatarX = { 38, 334, 630, 928, 1226 };
+    static readonly int[] AvatarW = { 270, 272, 274, 274, 270 };
+    const int AvatarY = 372, AvatarH = 292;
+
+    // Slices playerAvatar.png into AV_0..AV_4 on first run, then loads them.
+    static Sprite[] LoadAvatarSprites()
+    {
+        var imp = AssetImporter.GetAtPath(AvatarSheet) as TextureImporter;
+        if (imp == null)
+        {
+            Debug.LogError("Codex World: " + AvatarSheet + " is missing.");
+            return null;
+        }
+
+        var sprites = CollectAvatars();
+        if (sprites != null) return sprites;
+
+        imp.textureType = TextureImporterType.Sprite;
+        imp.spriteImportMode = SpriteImportMode.Multiple;
+        var factory = new SpriteDataProviderFactories();
+        factory.Init();
+        var dp = factory.GetSpriteEditorDataProviderFromObject(imp);
+        dp.InitSpriteEditorDataProvider();
+        var rects = new SpriteRect[AvatarX.Length];
+        for (int i = 0; i < rects.Length; i++)
+            rects[i] = new SpriteRect
+            {
+                name = "AV_" + i,
+                rect = new Rect(AvatarX[i], AvatarY, AvatarW[i], AvatarH),
+                alignment = SpriteAlignment.Center,
+                pivot = new Vector2(0.5f, 0.5f),
+            };
+        dp.SetSpriteRects(rects);
+        dp.Apply();
+        imp.SaveAndReimport();
+
+        sprites = CollectAvatars();
+        if (sprites == null) Debug.LogError("Codex World: slicing " + AvatarSheet + " failed.");
+        return sprites;
+    }
+
+    static Sprite[] CollectAvatars() => CollectByPrefix(AvatarSheet, "AV_", AvatarX.Length);
+
+    static Sprite[] CollectByPrefix(string path, string prefix, int expected)
+    {
+        var found = new Sprite[expected];
+        int count = 0;
+        foreach (var a in AssetDatabase.LoadAllAssetsAtPath(path))
+            if (a is Sprite s && s.name.StartsWith(prefix)
+                && int.TryParse(s.name.Substring(prefix.Length), out int i)
+                && i >= 0 && i < found.Length && found[i] == null)
+            {
+                found[i] = s;
+                count++;
+            }
+        return count == found.Length ? found : null;
+    }
+
+    // ---------------- Badge icons (AchievementUI.png) ----------------
+
+    const string AchSheet = "Assets/Design/Image/AchievementUI.png";
+    // Badge plate rects measured from the 1358x339 sheet (bottom-based y).
+    static readonly int[] BadgeX = { 649, 712, 773, 834, 896, 951 };
+    static readonly int[] BadgeW = { 55, 54, 54, 54, 54, 55 };
+    const int BadgeY = 52, BadgeH = 61;
+
+    // Appends ACH_Badge_0..5 to the sheet's existing slices on first run.
+    static Sprite[] LoadBadgeSprites()
+    {
+        var sprites = CollectByPrefix(AchSheet, "ACH_Badge_", BadgeX.Length);
+        if (sprites != null) return sprites;
+
+        var imp = AssetImporter.GetAtPath(AchSheet) as TextureImporter;
+        if (imp == null)
+        {
+            Debug.LogError("Codex World: " + AchSheet + " is missing.");
+            return null;
+        }
+        var factory = new SpriteDataProviderFactories();
+        factory.Init();
+        var dp = factory.GetSpriteEditorDataProviderFromObject(imp);
+        dp.InitSpriteEditorDataProvider();
+        var rects = new List<SpriteRect>(dp.GetSpriteRects());
+        for (int i = 0; i < BadgeX.Length; i++)
+            rects.Add(new SpriteRect
+            {
+                name = "ACH_Badge_" + i,
+                rect = new Rect(BadgeX[i], BadgeY, BadgeW[i], BadgeH),
+                alignment = SpriteAlignment.Center,
+                pivot = new Vector2(0.5f, 0.5f),
+            });
+        dp.SetSpriteRects(rects.ToArray());
+        dp.Apply();
+        imp.SaveAndReimport();
+
+        sprites = CollectByPrefix(AchSheet, "ACH_Badge_", BadgeX.Length);
+        if (sprites == null) Debug.LogError("Codex World: slicing badge icons failed.");
+        return sprites;
+    }
+
+    // ---------------- settingPanel.png kit ----------------
+
+    const string KitSheet = "Assets/Design/Image/settingPanel.png";
+
+    static bool LoadKit()
+    {
+        S = new Dictionary<string, Sprite>();
+        foreach (var a in AssetDatabase.LoadAllAssetsAtPath(KitSheet))
+            if (a is Sprite s) S[s.name] = s;
+        if (!S.ContainsKey("SP_Frame_Window") || !S.ContainsKey("SP_Toggle_Off"))
+        {
+            Debug.LogError("Codex World: " + KitSheet + " is not sliced (need SP_Frame_Window, SP_Plate, buttons, toggles).");
+            return false;
+        }
+        return true;
+    }
+
     // ---------------- Controls ----------------
 
     static InputField BuildNameInput(Transform w)
@@ -173,7 +309,10 @@ public static class ProfilePanelBuilder
         go.name = "NameInput";
         go.transform.SetParent(w, false);
         TopLeft((RectTransform)go.transform, PadX, 112, WW - PadX * 2, 44);
-        go.GetComponent<Image>().color = ControlCol;
+        var bgImage = go.GetComponent<Image>();
+        bgImage.sprite = S["SP_Plate"];
+        bgImage.type = Image.Type.Sliced;
+        bgImage.color = new Color(0.55f, 0.65f, 0.78f, 1f); // darkened plate so typed text pops
 
         var input = go.GetComponent<InputField>();
         input.characterLimit = 16;
@@ -191,13 +330,12 @@ public static class ProfilePanelBuilder
         return input;
     }
 
-    static Button BuildIconOption(Transform w, int index)
+    static Button BuildIconOption(Transform w, int index, Sprite sprite)
     {
-        var img = Panel(w, $"Icon_{index}", GameProfile.IconColors[index],
-            r => TopLeft(r, PadX + index * 105, 218, 80, 80));
-        var glyph = Text(img.transform, "Glyph", GameProfile.IconGlyphs[index], 24,
-            TextAnchor.MiddleCenter, new Color(0f, 0f, 0f, 0.8f), FontStyle.Bold);
-        Stretch(glyph.rectTransform);
+        var img = Panel(w, $"Icon_{index}", Color.white,
+            r => TopLeft(r, PadX + index * 135, 218, 80, 80));
+        img.sprite = sprite;
+        img.preserveAspect = true;
 
         var o = img.gameObject.AddComponent<Outline>();
         o.effectColor = Color.white;
@@ -207,7 +345,7 @@ public static class ProfilePanelBuilder
         return img.gameObject.AddComponent<Button>();
     }
 
-    static Toggle BuildBadgeToggle(Transform w, int index)
+    static Toggle BuildBadgeToggle(Transform w, int index, Sprite icon, out Text label)
     {
         var go = DefaultControls.CreateToggle(Res);
         go.name = $"Badge_{GameProfile.BadgeNames[index].Replace(" ", "")}";
@@ -215,41 +353,82 @@ public static class ProfilePanelBuilder
         int col = index % 2, row = index / 2;
         TopLeft((RectTransform)go.transform, 60 + col * 310, 362 + row * 44, 300, 36);
 
-        var label = go.transform.Find("Label")?.GetComponent<Text>();
+        // Kit checkbox: off-plate as background, on-plate as the checkmark.
+        var bg = go.transform.Find("Background")?.GetComponent<Image>();
+        if (bg != null)
+        {
+            var r = bg.rectTransform;
+            r.anchorMin = r.anchorMax = new Vector2(0f, 0.5f);
+            r.pivot = new Vector2(0f, 0.5f);
+            r.anchoredPosition = Vector2.zero;
+            r.sizeDelta = new Vector2(28, 28);
+            bg.sprite = S["SP_Toggle_Off"];
+            bg.color = Color.white;
+            bg.preserveAspect = true;
+        }
+        var chk = go.transform.Find("Background/Checkmark")?.GetComponent<Image>();
+        if (chk != null)
+        {
+            Stretch(chk.rectTransform);
+            chk.sprite = S["SP_Toggle_On"];
+            chk.color = Color.white;
+            chk.preserveAspect = true;
+        }
+
+        // The achievement's badge art next to the checkbox.
+        var iconImg = Panel(go.transform, "BadgeIcon", Color.white, r =>
+        {
+            r.anchorMin = r.anchorMax = new Vector2(0f, 0.5f);
+            r.pivot = new Vector2(0f, 0.5f);
+            r.anchoredPosition = new Vector2(38, 0);
+            r.sizeDelta = new Vector2(30, 30);
+        });
+        iconImg.sprite = icon;
+        iconImg.preserveAspect = true;
+
+        label = go.transform.Find("Label")?.GetComponent<Text>();
         if (label != null)
         {
-            label.text = $"{GameProfile.BadgeGlyphs[index]}   {GameProfile.BadgeNames[index]}";
+            var r = label.rectTransform;
+            r.anchorMin = Vector2.zero;
+            r.anchorMax = Vector2.one;
+            r.offsetMin = new Vector2(78, 0);
+            r.offsetMax = Vector2.zero;
+            label.text = GameProfile.BadgeNames[index];
             label.color = GameProfile.BadgeColors[index];
             label.fontSize = 15;
             label.fontStyle = FontStyle.Bold;
+            label.alignment = TextAnchor.MiddleLeft;
         }
-        var bg = go.transform.Find("Background")?.GetComponent<Image>();
-        if (bg != null) bg.color = ControlCol;
-        var toggle = go.GetComponent<Toggle>();
-        if (toggle.graphic is Image chk) chk.color = Cyan;
-        return toggle;
+        return go.GetComponent<Toggle>();
     }
 
-    static Button BottomButton(Transform w, float x, string label, Color color)
+    static Button BottomButton(Transform w, float x, string name, Sprite normal, Sprite hover)
     {
-        var go = new GameObject("Btn_" + label.Replace(" ", ""));
+        var go = new GameObject("Btn_" + name.Replace(" ", ""));
         go.transform.SetParent(w, false);
         var rt = go.AddComponent<RectTransform>();
         rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0f);
         rt.pivot = new Vector2(0.5f, 0f);
-        rt.sizeDelta = new Vector2(200, 48);
-        rt.anchoredPosition = new Vector2(x, 26);
-        go.AddComponent<Image>().color = color;
-        Outline(go, new Color(Cyan.r, Cyan.g, Cyan.b, 0.5f));
+        rt.sizeDelta = new Vector2(210, 62);
+        rt.anchoredPosition = new Vector2(x, 22);
+        var img = go.AddComponent<Image>();
+        img.sprite = normal;
+        img.preserveAspect = true;
         var btn = go.AddComponent<Button>();
-        var text = Text(go.transform, "Label", label, 16, TextAnchor.MiddleCenter, TextLight, FontStyle.Bold);
-        Stretch(text.rectTransform);
+        btn.transition = Selectable.Transition.SpriteSwap;
+        var ss = btn.spriteState;
+        ss.highlightedSprite = hover;
+        ss.pressedSprite = hover;
+        btn.spriteState = ss;
         return btn;
     }
 
     static void SectionHeader(Transform w, float y, string label)
     {
-        var bar = Panel(w, "Section_" + label.Split(' ')[0], SectionCol, r => TopLeft(r, PadX, y, WW - PadX * 2, 32));
+        var bar = Panel(w, "Section_" + label.Split(' ')[0], Color.white, r => TopLeft(r, PadX, y, WW - PadX * 2, 32));
+        bar.sprite = S["SP_Plate"];
+        bar.type = Image.Type.Sliced;
         var text = Text(bar.transform, "Label", label, 16, TextAnchor.MiddleLeft, Cyan, FontStyle.Bold);
         Stretch(text.rectTransform);
         text.rectTransform.offsetMin = new Vector2(14, 0);

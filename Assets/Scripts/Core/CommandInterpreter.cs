@@ -1,7 +1,4 @@
-// Codex World — Command Interpreter (3D version)
-// Ported from the validated 2D prototype. Executes a player-built command
-// sequence (sequences, counted loops, if-obstacle/if-clear conditionals,
-// arbitrarily nested) against a grid state and records snapshots for playback.
+// Codex World — Command Interpreter 
 
 using System.Collections.Generic;
 using UnityEngine;

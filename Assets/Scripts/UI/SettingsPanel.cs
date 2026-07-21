@@ -55,10 +55,18 @@ public class SettingsPanel : MonoBehaviour
         // (SettingsPanelBuilder sets them up) — no script wiring here.
         // Sliders stay code-wired: their % labels / live preview need code.
         if (masterSlider) masterSlider.onValueChanged.AddListener(v => { SetLabel(masterValue, v); AudioListener.volume = v; });
-        if (musicSlider) musicSlider.onValueChanged.AddListener(v => SetLabel(musicValue, v));
-        if (sfxSlider) sfxSlider.onValueChanged.AddListener(v => SetLabel(sfxValue, v));
+        if (musicSlider) musicSlider.onValueChanged.AddListener(v => { SetLabel(musicValue, v); GameSettings.SetMixerVolume("MusicVol", v); });
+        if (sfxSlider) sfxSlider.onValueChanged.AddListener(v => { SetLabel(sfxValue, v); GameSettings.SetMixerVolume("SFXVol", v); });
 
         Hide();
+    }
+
+    // Mixer values set during the first Awake are reset by snapshot init,
+    // so push the saved volumes again one frame later.
+    System.Collections.IEnumerator Start()
+    {
+        yield return null;
+        GameSettings.ApplyAudio();
     }
 
     // ---------------- Open / close ----------------

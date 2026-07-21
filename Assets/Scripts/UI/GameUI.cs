@@ -3,19 +3,27 @@
 // or rearrange them freely in the Scene view. This component just holds
 // references to them; each button's behaviour is configured in its OnClick()
 // list in the Inspector, targeting GameController's public handlers.
+// Layout (per the in-game concept): top bar (level | map name, XP, objective +
+// star conditions, settings gear), right-side command palette + queue panel,
+// and two centered result overlays (LEVEL COMPLETE! / TRY AGAIN!).
 
 using UnityEngine;
 using UnityEngine.UI;
 
 public class GameUI : MonoBehaviour
 {
+    [Header("Top Bar")]
+    public Text title;              // "LEVEL 01  |  FIRST STEPS"
+    public Text xpText;
+    public Text objectiveText;
+    public Text starConditionText;  // how to earn all 3 stars
+    public Text levelLabel;         // "Level 1 / 9" nav readout
+    public Button settingsButton;   // opens the SettingsPanel
+
     [Header("Texts")]
-    public Text title;
     public Text story;
     public Text status;
     public Text queueText;
-    public Text xpText;
-    public Text levelLabel;
 
     [Header("Basic Command Buttons")]
     public Button moveForwardButton;
@@ -38,27 +46,81 @@ public class GameUI : MonoBehaviour
     public Button clearButton;
     public Button prevButton;
     public Button nextButton;
-    public Button nextLevelButton;
+    public Button nextLevelButton;  // inside the win panel
     public Button resetSaveButton;
+    public Button retryButton;      // inside the fail panel
+    public Button returnButton;     // inside the fail panel (back to main menu)
 
     [Header("Groups (shown/hidden per level)")]
     public GameObject loopRow;
     public GameObject conditionalRow;
 
+    [Header("Result Panels")]
+    public GameObject winPanel;
+    public Text winMessage;
+    public Text winXPText;
+    public Text[] winStars;         // 3 star glyphs, colored by rating
+    public GameObject failPanel;
+    public Text failReason;
+    public Text failTip;
+
+    static readonly Color StarOn = new Color(1f, 0.8f, 0.2f);
+    static readonly Color StarOff = new Color(0.22f, 0.26f, 0.32f);
+
     public void ConfigureForLevel(LevelDefinition level, int index, int total, bool completed)
     {
-        if (title != null) title.text = $"{level.regionTitle}  —  {level.levelName}";
+        if (title != null) title.text = $"LEVEL {index + 1:00}  |  {level.levelName.ToUpper()}";
         if (story != null) story.text = level.story;
         if (levelLabel != null) levelLabel.text = $"Level {index + 1} / {total}" + (completed ? "  ✓" : "");
+        if (objectiveText != null) objectiveText.text = "OBJECTIVE: Reach the data beacon";
+        if (starConditionText != null)
+            starConditionText.text = $"Stars:  1 = complete the level   |   2 = use {level.optimalTokens} commands or fewer   |   3 = no failed runs";
         if (loopRow != null) loopRow.SetActive(level.allowLoops);
         if (conditionalRow != null) conditionalRow.SetActive(level.allowConditionals);
-        ShowNextButton(false);
+        HideResultPanels();
+    }
+
+    // ---------------- Result panels ----------------
+
+    public void ShowWin(int stars, int xpGained, bool isLast, string message)
+    {
+        HideResultPanels();
+        if (winPanel != null) winPanel.SetActive(true);
+        if (winStars != null)
+            for (int i = 0; i < winStars.Length; i++)
+                if (winStars[i] != null) winStars[i].color = i < stars ? StarOn : StarOff;
+        if (winMessage != null) winMessage.text = message;
+        if (winXPText != null) winXPText.text = xpGained > 0 ? $"XP AWARDED   +{xpGained} XP" : "Already completed — no new XP";
+        // Always keep an exit on the win panel: NEXT LEVEL mid-game, MAIN MENU
+        // after the final level (both go through GameController.GoNext).
+        ShowNextButton(true);
+        if (nextLevelButton != null)
+        {
+            var label = nextLevelButton.GetComponentInChildren<Text>(true);
+            if (label != null) label.text = isLast ? "MAIN MENU" : "NEXT LEVEL";
+        }
+    }
+
+    public void ShowFail(string reason, string tip)
+    {
+        HideResultPanels();
+        if (failPanel != null) failPanel.SetActive(true);
+        if (failReason != null) failReason.text = reason;
+        if (failTip != null) failTip.text = "TIP: " + tip;
+    }
+
+    public void HideResultPanels()
+    {
+        if (winPanel != null) winPanel.SetActive(false);
+        if (failPanel != null) failPanel.SetActive(false);
     }
 
     public void ShowNextButton(bool show)
     {
         if (nextLevelButton != null) nextLevelButton.gameObject.SetActive(show);
     }
+
+    // ---------------- Status & readouts ----------------
 
     public void SetStatus(string msg) { status.text = msg; status.color = new Color(1f, 0.9f, 0.4f); }
     public void SetStatusGood(string msg) { status.text = msg; status.color = new Color(0.4f, 1f, 0.55f); }

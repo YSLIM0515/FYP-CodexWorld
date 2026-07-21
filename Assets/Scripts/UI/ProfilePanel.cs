@@ -22,6 +22,10 @@ public class ProfilePanel : MonoBehaviour
     public Button[] iconOptions;
     [Tooltip("Badge toggles, in the same order as GameProfile.BadgeNames. First 3 ticked are shown.")]
     public Toggle[] badgeToggles;
+    [Tooltip("Badge toggle labels — restyled by Open() when a badge is still locked.")]
+    public Text[] badgeLabels;
+    [Tooltip("Badge icon sprites (ACH_Badge_0..5) shown on the profile card.")]
+    public Sprite[] badgeSprites;
 
     [Header("Buttons")]
     public Button saveButton;
@@ -31,6 +35,8 @@ public class ProfilePanel : MonoBehaviour
     public Text cardNameText;
     public Image cardAvatar;
     public Text cardAvatarGlyph;
+    [Tooltip("Avatar portraits in icon-option order (AV_0..AV_4). Glyph/color fallback is used when empty.")]
+    public Sprite[] avatarSprites;
     [Tooltip("Mini badge squares on the profile card (3 slots).")]
     public Image[] cardBadgeSlots;
     public Text[] cardBadgeGlyphs;
@@ -53,7 +59,17 @@ public class ProfilePanel : MonoBehaviour
         if (nameInput) nameInput.text = GameProfile.Name;
         SelectIcon(GameProfile.Icon);
         for (int i = 0; i < badgeToggles.Length; i++)
-            if (badgeToggles[i]) badgeToggles[i].isOn = GameProfile.Badges.Contains(i);
+        {
+            if (!badgeToggles[i]) continue;
+            bool unlocked = GameProfile.BadgeUnlocked(i);
+            badgeToggles[i].interactable = unlocked;
+            badgeToggles[i].isOn = unlocked && GameProfile.Badges.Contains(i);
+            if (badgeLabels != null && i < badgeLabels.Length && badgeLabels[i])
+            {
+                badgeLabels[i].text = GameProfile.BadgeNames[i] + (unlocked ? "" : "   [LOCKED]");
+                badgeLabels[i].color = unlocked ? GameProfile.BadgeColors[i] : new Color(0.62f, 0.66f, 0.72f);
+            }
+        }
 
         Root().SetActive(true);
         transform.SetAsLastSibling();
@@ -82,7 +98,7 @@ public class ProfilePanel : MonoBehaviour
 
         GameProfile.Badges.Clear();
         for (int i = 0; i < badgeToggles.Length && GameProfile.Badges.Count < GameProfile.MaxBadges; i++)
-            if (badgeToggles[i] && badgeToggles[i].isOn)
+            if (badgeToggles[i] && badgeToggles[i].isOn && GameProfile.BadgeUnlocked(i))
                 GameProfile.Badges.Add(i);
 
         GameProfile.Save();
@@ -95,7 +111,15 @@ public class ProfilePanel : MonoBehaviour
     public void RefreshCard()
     {
         if (cardNameText) cardNameText.text = GameProfile.Name;
-        if (cardAvatar) cardAvatar.color = GameProfile.IconColors[GameProfile.Icon];
+        if (cardAvatar)
+        {
+            if (avatarSprites != null && avatarSprites.Length > 0)
+            {
+                cardAvatar.sprite = avatarSprites[Mathf.Clamp(GameProfile.Icon, 0, avatarSprites.Length - 1)];
+                cardAvatar.color = Color.white;
+            }
+            else cardAvatar.color = GameProfile.IconColors[GameProfile.Icon];
+        }
         if (cardAvatarGlyph) cardAvatarGlyph.text = GameProfile.IconGlyphs[GameProfile.Icon];
 
         for (int slot = 0; slot < cardBadgeSlots.Length; slot++)
@@ -104,8 +128,14 @@ public class ProfilePanel : MonoBehaviour
             if (cardBadgeSlots[slot]) cardBadgeSlots[slot].gameObject.SetActive(used);
             if (!used) continue;
             int badge = GameProfile.Badges[slot];
-            if (cardBadgeSlots[slot]) cardBadgeSlots[slot].color = GameProfile.BadgeColors[badge];
-            if (slot < cardBadgeGlyphs.Length && cardBadgeGlyphs[slot]) cardBadgeGlyphs[slot].text = GameProfile.BadgeGlyphs[badge];
+            bool hasArt = badgeSprites != null && badge < badgeSprites.Length && badgeSprites[badge] != null;
+            if (cardBadgeSlots[slot])
+            {
+                cardBadgeSlots[slot].sprite = hasArt ? badgeSprites[badge] : null;
+                cardBadgeSlots[slot].color = hasArt ? Color.white : GameProfile.BadgeColors[badge];
+            }
+            if (slot < cardBadgeGlyphs.Length && cardBadgeGlyphs[slot])
+                cardBadgeGlyphs[slot].text = hasArt ? "" : GameProfile.BadgeGlyphs[badge];
         }
     }
 

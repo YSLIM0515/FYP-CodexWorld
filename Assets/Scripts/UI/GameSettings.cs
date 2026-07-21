@@ -68,7 +68,23 @@ public static class GameSettings
         ColorBlind = DefColorBlind;
     }
 
-    public static void ApplyAudio() => AudioListener.volume = Master;
+    static UnityEngine.Audio.AudioMixer _mixer;
+    static UnityEngine.Audio.AudioMixer Mixer =>
+        _mixer != null ? _mixer : _mixer = Resources.Load<UnityEngine.Audio.AudioMixer>("GameAudioMixer");
+
+    public static void ApplyAudio()
+    {
+        AudioListener.volume = Master;
+        SetMixerVolume("MusicVol", Music);
+        SetMixerVolume("SFXVol", Sfx);
+    }
+
+    // Sliders are linear 0..1; mixer attenuation is dB (-80 dB = silence).
+    public static void SetMixerVolume(string param, float linear)
+    {
+        if (Mixer != null)
+            Mixer.SetFloat(param, linear > 0.0001f ? Mathf.Log10(linear) * 20f : -80f);
+    }
 
     public static void ApplyDisplay()
     {

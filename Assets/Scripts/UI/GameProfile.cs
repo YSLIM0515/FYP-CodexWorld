@@ -16,21 +16,25 @@ public static class GameProfile
     public const int MaxBadges = 3;
     public const string DefaultName = "CODE_MASTER";
 
-    // ---- Avatar icon options (draft placeholders until real art) ----
-    public static readonly string[] IconGlyphs = { "</>", "{}", "@", "#", "A*", "&" };
+    // ---- Avatar icon options ----
+    // 5 portraits sliced from Design/Image/playerAvatar.png (AV_0..AV_4).
+    // Glyph/color are only the fallback look when the sprites are missing.
+    public static readonly string[] IconGlyphs = { "</>", "{}", "@", "#", "&" };
     public static readonly Color[] IconColors =
     {
         new Color(0.45f, 0.85f, 1f),    // cyan
-        new Color(0.94f, 0.76f, 0.29f), // gold
-        new Color(0.35f, 0.85f, 0.45f), // green
         new Color(0.75f, 0.55f, 0.95f), // purple
-        new Color(0.95f, 0.45f, 0.45f), // red
+        new Color(0.35f, 0.85f, 0.45f), // green
         new Color(0.35f, 0.55f, 0.95f), // blue
+        new Color(0.88f, 0.92f, 0.96f), // white
     };
 
-    // ---- Badge options (match the achievements screen placeholders) ----
+    // ---- Badge options (each linked to a real achievement) ----
     public static readonly string[] BadgeNames =
         { "Hello World", "Debugger", "Loop Learner", "Efficient Coder", "Logic Master", "Virus Purger" };
+    // Index into AchievementManager.Defs a badge belongs to — a badge can only
+    // be equipped once its achievement is unlocked.
+    public static readonly int[] BadgeAchievements = { 0, 1, 6, 7, 12, 14 };
     public static readonly string[] BadgeGlyphs = { "</>", "!", "x4", "++", "IF", "@" };
     public static readonly Color[] BadgeColors =
     {
@@ -46,15 +50,19 @@ public static class GameProfile
     public static int Icon;
     public static readonly List<int> Badges = new List<int>();
 
+    public static bool BadgeUnlocked(int badge) =>
+        badge >= 0 && badge < BadgeAchievements.Length && AchievementManager.IsUnlocked(BadgeAchievements[badge]);
+
     public static void Load()
     {
         Name = PlayerPrefs.GetString("cw_prof_name", DefaultName);
         Icon = Mathf.Clamp(PlayerPrefs.GetInt("cw_prof_icon", 0), 0, IconGlyphs.Length - 1);
 
         Badges.Clear();
-        string csv = PlayerPrefs.GetString("cw_prof_badges", "0,2,4");
+        string csv = PlayerPrefs.GetString("cw_prof_badges", "");
         foreach (var part in csv.Split(','))
-            if (int.TryParse(part, out int i) && i >= 0 && i < BadgeNames.Length && Badges.Count < MaxBadges && !Badges.Contains(i))
+            if (int.TryParse(part, out int i) && i >= 0 && i < BadgeNames.Length && Badges.Count < MaxBadges && !Badges.Contains(i)
+                && BadgeUnlocked(i))
                 Badges.Add(i);
     }
 
