@@ -39,6 +39,17 @@ public static class ProgressManager
         }
     }
 
+    // XP with no completion bookkeeping. Challenge mode uses this: its maps are
+    // indexed 0-4, which collide with the beginner level keys, so it must never
+    // go through CompleteLevel or it would mark beginner levels finished.
+    public static int AwardXP(int amount)
+    {
+        if (amount <= 0) return 0;
+        PlayerPrefs.SetInt("cw_xp", TotalXP + amount);
+        PlayerPrefs.Save();
+        return amount;
+    }
+
     // Awards XP for a completion and unlocks the next level.
     // Base XP is granted once per level; bonus XP once, whenever first achieved.
     public static int CompleteLevel(int level, bool earnedBonus)

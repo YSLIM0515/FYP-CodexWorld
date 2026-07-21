@@ -16,6 +16,7 @@ public class ChallengeSummary : MonoBehaviour
     public Text mapsText;
     public Text starsText;
     public Text hintsText;
+    public Text xpText;
     public Text timeText;
     public Text seedText;
     public Text gradeText;
@@ -34,8 +35,9 @@ public class ChallengeSummary : MonoBehaviour
         root.SetActive(false);
     }
 
-    public void Show(int mapsCleared, int mapsTotal, int stars, int hintsUsed, float seconds, int seed)
+    public void Show(int mapsCleared, int mapsTotal, int stars, int hintsUsed, float seconds, int seed, int xpEarned = 0)
     {
+        if (xpText != null) xpText.text = xpEarned > 0 ? $"+{xpEarned} XP" : "—";
         int maxStars = mapsTotal * 3;
         if (titleText != null)
             titleText.text = mapsCleared >= mapsTotal ? "RUN COMPLETE" : "RUN ENDED";

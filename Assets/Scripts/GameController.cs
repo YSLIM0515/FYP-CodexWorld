@@ -29,6 +29,14 @@ public class GameController : MonoBehaviour
     public UnityEngine.UI.Button hintButton;
     public UnityEngine.UI.Text hintLabel;
 
+    [Header("Challenge Rewards (XP)")]
+    [Tooltip("XP for clearing a challenge map, before the star bonus.")]
+    public int challengeClearXP = 25;
+    [Tooltip("Extra XP per star earned on a challenge map.")]
+    public int challengeStarXP = 20;
+    [Tooltip("Bonus XP for clearing all 5 maps in one run.")]
+    public int challengeRunBonus = 100;
+
     [Header("Celebration")]
     [Tooltip("Particle prefab spawned on the goal tile when a level is solved.")]
     public GameObject winEffect;
@@ -59,6 +67,7 @@ public class GameController : MonoBehaviour
     int _runStars;
     int _runCleared;
     int _runHints;
+    int _runXP;
     float _runStartTime;
 
     int CurrentBudget => _challenge && _challengeMaps != null ? _challengeMaps[_levelIndex].Budget : int.MaxValue;
@@ -197,7 +206,7 @@ public class GameController : MonoBehaviour
             {
                 ui.HideResultPanels();
                 challengeSummary.Show(_runCleared, levels.Length, _runStars, _runHints,
-                                      Time.time - _runStartTime, _challengeMaps[0].Seed);
+                                      Time.time - _runStartTime, _challengeMaps[0].Seed, _runXP);
                 return;
             }
             ReturnToMenu();
@@ -379,12 +388,23 @@ public class GameController : MonoBehaviour
         {
             yield return avatar.PlayWin();
             bool bonus = _queue.Count <= _level.optimalTokens;
-            int gained = _challenge ? 0 : ProgressManager.CompleteLevel(_levelIndex, bonus);
-            ui.RefreshXP();
-
             bool isLast = _levelIndex == levels.Length - 1;
             int stars = 1 + (bonus ? 1 : 0) + (_failedThisLevel ? 0 : 1);
             if (_challenge && _hintUsedThisMap) stars = Mathf.Min(stars, 2); // hints cap at 2 stars
+
+            // Challenge XP is performance-scaled and never touches completion
+            // state: the maps are replayable, so the reward has to come from how
+            // well the map was solved, not merely that it was.
+            int gained;
+            if (_challenge)
+            {
+                int award = challengeClearXP + stars * challengeStarXP;
+                if (isLast) award += challengeRunBonus;
+                gained = ProgressManager.AwardXP(award);
+                _runXP += gained;
+            }
+            else gained = ProgressManager.CompleteLevel(_levelIndex, bonus);
+            ui.RefreshXP();
             string msg = _challenge
                 ? (isLast ? "CHALLENGE COMPLETE! All 5 corrupted sectors purged."
                           : $"SECTOR CLEARED! {levels.Length - 1 - _levelIndex} corrupted sector(s) remain.")

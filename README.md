@@ -38,9 +38,16 @@ path, to a structural description, to the first few solution tokens. A free hint
 after two failures on the same map. Using a hint caps that map at 2 stars.
 
 Clearing the last map opens a **run summary** — sectors cleared, stars earned, hints spent,
-run time, a letter grade, and the run seed. Challenge mode deliberately writes no progress or
-achievements, so this panel is the only record a run happened; the seed identifies it when
-comparing playtests.
+XP earned, run time, and a letter grade.
+
+Challenge XP is performance-scaled: 25 XP per map cleared plus 20 per star, and 100 for
+finishing all five — so a perfect run pays 525 and a scrappy one 325. Because hints cap a map
+at 2 stars and a failed run costs the third, the reward tracks *how well* a map was solved
+rather than merely that it was, which is also what stops the mode being farmed. It never
+records completion state: challenge maps are indexed 0-4, colliding with the beginner level
+keys, so XP is awarded through `ProgressManager.AwardXP` instead of `CompleteLevel`.
+The whole beginner campaign yields at most 1350 XP against a 1500 XP level, so challenge runs
+are what carry progression past level 1.
 
 ## Progression and feedback
 
