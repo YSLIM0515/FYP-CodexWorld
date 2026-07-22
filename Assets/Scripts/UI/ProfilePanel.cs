@@ -22,7 +22,7 @@ public class ProfilePanel : MonoBehaviour
     public Button[] iconOptions;
     [Tooltip("Badge toggles, in the same order as GameProfile.BadgeNames. First 3 ticked are shown.")]
     public Toggle[] badgeToggles;
-    [Tooltip("Badge toggle labels — restyled by Open() when a badge is still locked.")]
+    [Tooltip("Badge toggle labels - restyled by Open() when a badge is still locked.")]
     public Text[] badgeLabels;
     [Tooltip("Badge icon sprites (ACH_Badge_0..5) shown on the profile card.")]
     public Sprite[] badgeSprites;

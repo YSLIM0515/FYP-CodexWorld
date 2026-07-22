@@ -15,7 +15,7 @@ public class LevelNumberDisplay : MonoBehaviour
     public Image[] digitSlots;
     [Tooltip("Digit sprites 0-9, in order (Number_0 .. Number_9).")]
     public Sprite[] numerals;
-    [Tooltip("XP needed per level — keep in sync with MainMenuController.xpPerLevel.")]
+    [Tooltip("XP needed per level - keep in sync with MainMenuController.xpPerLevel.")]
     public int xpPerLevel = 5000;
     [Tooltip("Animator on the level badge; its 'Pulse' trigger fires when the level went up since last seen.")]
     public Animator pulseAnimator;

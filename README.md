@@ -148,6 +148,15 @@ generator scripts (the old builder tooling has been removed).
   on colour alone (WCAG 1.4.1). In colour-blind mode the red/green pair also becomes
   amber/cyan, matching the board.
 
+## Asset licences
+
+`Assets/Design/Fonts/pixel.ttf` ("Pixel" by krolesz94, via FontStruct) is licensed
+**non-commercial, no redistribution** — see `license.txt` beside it. Using it in this project
+is fine and clause 2.5 permits embedding a subset in a built player, but clause 2.3 forbids
+making the font file available to third parties. **This repository must therefore stay
+private.** Publishing it, or adding collaborators, would redistribute the font; swap in an
+OFL-licensed pixel font first if the project ever needs to go public.
+
 ## Known gaps
 
 - The **language dropdown** in Settings is saved but not applied — no localisation strings

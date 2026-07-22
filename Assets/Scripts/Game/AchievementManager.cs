@@ -31,7 +31,7 @@ public static class AchievementManager
         new Def("Refactorer", "Clear the queue, then solve a better way.", Tier.Silver),
         new Def("Factory Foreman", "Complete Loop Factory.", Tier.Silver),
         new Def("Nested Mind", "Use a loop inside a loop.", Tier.Silver),
-        new Def("Bug Squasher", "Fail 10 runs — and keep going.", Tier.Silver),
+        new Def("Bug Squasher", "Fail 10 runs - and keep going.", Tier.Silver),
         new Def("Logic Master", "Solve a level using an IF conditional.", Tier.Gold),
         new Def("Algorithm Architect", "Combine loops and conditionals.", Tier.Gold),
         new Def("Virus Purger", "Purge the Null Virus.", Tier.Gold),

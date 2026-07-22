@@ -11,7 +11,7 @@ public class CellMarker : MonoBehaviour
 {
     public CellType type = CellType.Obstacle;
 
-    [Tooltip("Only used when Type is Spawn — the direction AXIOM starts facing.")]
+    [Tooltip("Only used when Type is Spawn - the direction AXIOM starts facing.")]
     public Facing spawnFacing = Facing.North;
 
     public Vector2Int Cell =>

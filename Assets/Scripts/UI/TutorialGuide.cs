@@ -74,12 +74,20 @@ public class TutorialGuide : MonoBehaviour
         if (panelRoot != null) panelRoot.SetActive(true);
 
         var target = TargetFor(step);
-        if (highlight != null && target != null)
+        if (highlight != null)
         {
-            // Buttons are authored with a top-left pivot — center on the rect.
-            var rt = (RectTransform)target.transform;
-            highlight.position = rt.TransformPoint(rt.rect.center);
-            highlight.sizeDelta = rt.rect.size + new Vector2(16, 16);
+            // With no target the highlight has nothing to point at. It must be
+            // hidden rather than left where it was: the panel is switched on
+            // regardless, so a stale highlight would otherwise sit on screen as
+            // an unexplained empty rectangle.
+            highlight.gameObject.SetActive(target != null);
+            if (target != null)
+            {
+                // Buttons are authored with a top-left pivot - center on the rect.
+                var rt = (RectTransform)target.transform;
+                highlight.position = rt.TransformPoint(rt.rect.center);
+                highlight.sizeDelta = rt.rect.size + new Vector2(16, 16);
+            }
         }
         if (tipText != null) tipText.text = TextFor(step);
     }
@@ -109,14 +117,14 @@ public class TutorialGuide : MonoBehaviour
                 return step == 0
                     ? "NEW COMMAND: LOOP!\nA loop repeats everything inside it.\nClick LOOP x2 to open a repeat block."
                     : step == 1
-                    ? "You are inside the loop now.\nAdd a MOVE — the loop will run it twice."
-                    : "Close the block with END BLOCK.\nLOOP x4 [ MOVE ] gives 4 moves from\njust 3 blocks — loops save commands!";
+                    ? "You are inside the loop now.\nAdd a MOVE - the loop will run it twice."
+                    : "Close the block with END BLOCK.\nLOOP x4 [ MOVE ] gives 4 moves from\njust 3 blocks - loops save commands!";
             case Lesson.Ifs:
                 return step == 0
                     ? "NEW COMMAND: IF!\nIF OBSTACLE runs its block only when a\ncorrupted block is directly ahead. Click it."
                     : step == 1
                     ? "Commands inside the IF run only when\nthe condition is true. Add TURN LEFT\nto dodge the obstacle."
-                    : "Close the IF with END BLOCK.\nIF CLEAR is the opposite — it runs\nwhen the path ahead is open.";
+                    : "Close the IF with END BLOCK.\nIF CLEAR is the opposite - it runs\nwhen the path ahead is open.";
             default:
                 return "";
         }

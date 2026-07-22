@@ -106,7 +106,7 @@ public class GameController : MonoBehaviour
             defs[i] = maps[i] != null ? ChallengeLevelBuilder.Build(maps[i], i, template, parent) : null;
             if (defs[i] == null)
             {
-                Debug.LogError("Codex World: challenge generation failed — falling back to beginner mode.");
+                Debug.LogError("Codex World: challenge generation failed - falling back to beginner mode.");
                 _challenge = false;
                 return;
             }
@@ -161,7 +161,7 @@ public class GameController : MonoBehaviour
         if (_challenge)
         {
             UpdateHintLabel();
-            ui.SetStatus($"CHALLENGE {index + 1}/5 — budget {CurrentBudget} commands (optimal {_level.optimalTokens}). Compress with loops and logic!");
+            ui.SetStatus($"CHALLENGE {index + 1}/5 - budget {CurrentBudget} commands (optimal {_level.optimalTokens}). Compress with loops and logic!");
         }
 
         // Contextual tutorial: teaches whatever this level just unlocked.
@@ -214,7 +214,7 @@ public class GameController : MonoBehaviour
         }
         if (_challenge ? target > _challengeUnlocked : target > ProgressManager.HighestUnlocked)
         {
-            ui.SetStatusBad("That region is still corrupted — complete this level to unlock it.");
+            ui.SetStatusBad("That region is still corrupted - complete this level to unlock it.");
             return;
         }
         LoadLevel(target);
@@ -355,7 +355,7 @@ public class GameController : MonoBehaviour
         if (_isRunning) yield break;
         if (_queue.Count == 0)
         {
-            ui.SetStatusBad("The queue is empty — add some commands first.");
+            ui.SetStatusBad("The queue is empty - add some commands first.");
             yield break;
         }
         if (OpenBlocks().Count > 0)
@@ -365,7 +365,7 @@ public class GameController : MonoBehaviour
         }
         if (_challenge && _queue.Count > CurrentBudget)
         {
-            ui.SetStatusBad($"Over budget! This sector allows {CurrentBudget} command blocks — you queued {_queue.Count}. Compress with loops/logic.");
+            ui.SetStatusBad($"Over budget! This sector allows {CurrentBudget} command blocks - you queued {_queue.Count}. Compress with loops/logic.");
             yield break;
         }
 
@@ -441,7 +441,7 @@ public class GameController : MonoBehaviour
         {
             _failedThisLevel = true;
             ui.SetStatusBad("The beacon was not reached.");
-            ui.ShowFail($"Sequence ended at {state.Position} — the beacon was not reached.", FailTip());
+            ui.ShowFail($"Sequence ended at {state.Position} - the beacon was not reached.", FailTip());
             ScanQueue(out bool sLoop, out bool sIf);
             AnalyticsLogger.LogRun(_challenge, _levelIndex, _level.levelName, "fail_incomplete", _attempts,
                 Time.time - _levelStartTime, _queue.Count, _level.optimalTokens, sLoop, sIf, _hintTier, 0);
@@ -473,7 +473,7 @@ public class GameController : MonoBehaviour
         if (_failsThisMap >= 2 && !_hintUsedThisMap) _freeHint = true;
         UpdateHintLabel();
         return _freeHint
-            ? "Struggling? Press HINT — this one's free."
+            ? "Struggling? Press HINT - this one's free."
             : "No tips in Challenge Mode. Trace the route before you run.";
     }
 
@@ -490,7 +490,7 @@ public class GameController : MonoBehaviour
         bool free = _freeHint;
         if (!free && _hintTokens <= 0)
         {
-            ui.SetStatusBad("No hint tokens left this run — solve it with pure logic!");
+            ui.SetStatusBad("No hint tokens left this run - solve it with pure logic!");
             return;
         }
         var data = _level.GetComponent<ChallengeLevelData>();
@@ -500,7 +500,7 @@ public class GameController : MonoBehaviour
         {
             case 0:
                 StartCoroutine(GlowPath(data));
-                ui.SetStatusGood("HINT 1: the optimal route lights up for a moment — memorize it!");
+                ui.SetStatusGood("HINT 1: the optimal route lights up for a moment - memorize it!");
                 break;
             case 1:
                 int loops = 0, ifs = 0;
@@ -509,14 +509,14 @@ public class GameController : MonoBehaviour
                     if (t.Type == CommandType.LoopStart) loops++;
                     if (t.Type == CommandType.IfObstacle || t.Type == CommandType.IfClear) ifs++;
                 }
-                ui.SetStatusGood($"HINT 2: the optimal program is {data.Map.OptimalTokens} tokens — {loops} loop(s), {ifs} IF(s).");
+                ui.SetStatusGood($"HINT 2: the optimal program is {data.Map.OptimalTokens} tokens - {loops} loop(s), {ifs} IF(s).");
                 break;
             default:
                 _queue.Clear();
                 for (int i = 0; i < Mathf.Min(4, data.Map.Solution.Count); i++)
                     _queue.Add(data.Map.Solution[i]);
                 UpdateQueueText();
-                ui.SetStatusGood("HINT 3: the optimal program's first commands are in your queue — finish it.");
+                ui.SetStatusGood("HINT 3: the optimal program's first commands are in your queue - finish it.");
                 break;
         }
 

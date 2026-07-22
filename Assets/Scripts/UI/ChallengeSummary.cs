@@ -37,7 +37,7 @@ public class ChallengeSummary : MonoBehaviour
 
     public void Show(int mapsCleared, int mapsTotal, int stars, int hintsUsed, float seconds, int seed, int xpEarned = 0)
     {
-        if (xpText != null) xpText.text = xpEarned > 0 ? $"+{xpEarned} XP" : "—";
+        if (xpText != null) xpText.text = xpEarned > 0 ? $"+{xpEarned} XP" : "-";
         int maxStars = mapsTotal * 3;
         if (titleText != null)
             titleText.text = mapsCleared >= mapsTotal ? "RUN COMPLETE" : "RUN ENDED";

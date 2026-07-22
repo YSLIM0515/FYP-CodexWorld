@@ -25,7 +25,7 @@ public class AchievementsScreen : MonoBehaviour
     public Sprite[] icons;
 
     [Header("Recently Unlocked slots")]
-    [Tooltip("\"Nothing unlocked yet\" hint — hidden once anything is unlocked.")]
+    [Tooltip("\"Nothing unlocked yet\" hint - hidden once anything is unlocked.")]
     public GameObject recentEmptyHint;
     public GameObject[] recentRoots;
     public Image[] recentIcons;

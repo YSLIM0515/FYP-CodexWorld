@@ -28,7 +28,7 @@ public class MainMenuController : MonoBehaviour
     public AchievementsScreen achievementsScreen;
 
     [Header("Art (swap later)")]
-    [Tooltip("Full-screen background — assign the pixel-art image when ready.")]
+    [Tooltip("Full-screen background - assign the pixel-art image when ready.")]
     public Image background;
     [Tooltip("Player avatar portrait in the profile card.")]
     public Image avatar;
@@ -88,5 +88,5 @@ public class MainMenuController : MonoBehaviour
     }
 
     static void Placeholder(string feature) =>
-        Debug.Log($"MainMenu: '{feature}' is a placeholder for the draft — screen not built yet.");
+        Debug.Log($"MainMenu: '{feature}' is a placeholder for the draft - screen not built yet.");
 }

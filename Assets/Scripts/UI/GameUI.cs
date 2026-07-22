@@ -71,7 +71,7 @@ public class GameUI : MonoBehaviour
     {
         if (title != null) title.text = $"LEVEL {index + 1:00}  |  {level.levelName.ToUpper()}";
         if (story != null) story.text = level.story;
-        if (levelLabel != null) levelLabel.text = $"Level {index + 1} / {total}" + (completed ? "  ✓" : "");
+        if (levelLabel != null) levelLabel.text = $"Level {index + 1} / {total}" + (completed ? "  [DONE]" : "");
         if (objectiveText != null) objectiveText.text = "OBJECTIVE: Reach the data beacon";
         if (starConditionText != null)
             starConditionText.text = $"Stars:  1 = complete the level   |   2 = use {level.optimalTokens} commands or fewer   |   3 = no failed runs";
@@ -90,7 +90,7 @@ public class GameUI : MonoBehaviour
             for (int i = 0; i < winStars.Length; i++)
                 if (winStars[i] != null) winStars[i].color = i < stars ? StarOn : StarOff;
         if (winMessage != null) winMessage.text = message;
-        if (winXPText != null) winXPText.text = xpGained > 0 ? $"XP AWARDED   +{xpGained} XP" : "Already completed — no new XP";
+        if (winXPText != null) winXPText.text = xpGained > 0 ? $"XP AWARDED   +{xpGained} XP" : "Already completed - no new XP";
         // Always keep an exit on the win panel: NEXT LEVEL mid-game, MAIN MENU
         // after the final level (both go through GameController.GoNext).
         ShowNextButton(true);
@@ -127,12 +127,16 @@ public class GameUI : MonoBehaviour
     // separate, and this line is the game's main feedback channel (WCAG 1.4.1 —
     // colour must never be the only carrier of meaning). Colour-blind mode also
     // swaps that pair for the cyan/amber used on the board.
-    string _statusGlyph = "›", _statusMsg = "";
+    string _statusGlyph = ">", _statusMsg = "";
     int _statusKind;   // 0 neutral, 1 good, 2 bad
 
-    public void SetStatus(string msg) => ShowStatus("›", msg, 0);
-    public void SetStatusGood(string msg) => ShowStatus("✓", msg, 1);
-    public void SetStatusBad(string msg) => ShowStatus("✗", msg, 2);
+    // Plain ASCII on purpose: the check/cross marks were not in either project
+    // font and came from an OS fallback face, so they rendered in a different
+    // typeface (and would vanish on a platform without that fallback). The
+    // bracketed forms also suit the game's terminal theme.
+    public void SetStatus(string msg) => ShowStatus(">", msg, 0);
+    public void SetStatusGood(string msg) => ShowStatus("[OK]", msg, 1);
+    public void SetStatusBad(string msg) => ShowStatus("[X]", msg, 2);
 
     void ShowStatus(string glyph, string msg, int kind)
     {

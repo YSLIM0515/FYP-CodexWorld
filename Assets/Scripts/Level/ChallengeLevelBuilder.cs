@@ -46,7 +46,7 @@ public static class ChallengeLevelBuilder
         var def = root.AddComponent<LevelDefinition>();
         def.levelName = $"{map.Archetype.ToUpper()} SECTOR";
         def.regionTitle = $"CHALLENGE {index + 1} / 5";
-        def.story = $"MAP SEED {map.Seed:X}\nBudget: {map.Budget} commands (optimal {map.OptimalTokens}). A flat sequence needs {map.SequenceTokens} — compress with loops and logic!";
+        def.story = $"MAP SEED {map.Seed:X}\nBudget: {map.Budget} commands (optimal {map.OptimalTokens}). A flat sequence needs {map.SequenceTokens} - compress with loops and logic!";
         def.hint = ""; // no tips in challenge mode
         def.allowLoops = true;
         def.allowConditionals = true;

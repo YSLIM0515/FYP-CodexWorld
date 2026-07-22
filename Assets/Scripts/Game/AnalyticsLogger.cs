@@ -39,7 +39,7 @@ public static class AnalyticsLogger
         }
         catch (System.Exception e)
         {
-            Debug.LogWarning("Codex World: analytics write failed — " + e.Message);
+            Debug.LogWarning("Codex World: analytics write failed - " + e.Message);
         }
     }
 }
