@@ -1,5 +1,5 @@
 // Codex World — Student's Journey progress dashboard (scene-authored)
-// Three region panels (Sequence Valley / Loop Factory / Virus Nexus), each with
+// Three region panels (Sequence Valley / Loop Factory / Logic Forest), each with
 // a radial mastery dial, a levels-completed counter, a 3-star count and the XP
 // earned in that region. Stats derive from ProgressManager (cw_done_{i} /
 // cw_bonus_{i}, 3 levels per region); the optimal-solve flag stands in for the
@@ -18,7 +18,7 @@ public class StudentJourneyScreen : MonoBehaviour
     public Text playerLabel;
     public Text totalXPLabel;
 
-    [Header("Per-region (Sequence Valley, Loop Factory, Virus Nexus)")]
+    [Header("Per-region (Sequence Valley, Loop Factory, Logic Forest)")]
     public Image[] ringFills;          // radial-filled mastery dials
     public Text[] masteryLabels;       // "78%"
     public Text[] completedLabels;     // "2 / 3"
