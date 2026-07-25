@@ -42,15 +42,50 @@ public class MainMenuController : MonoBehaviour
     }
 
 
+    // Remembers the XP the bar last animated to, so a return from a level
+    // animates only the newly-earned amount rather than snapping.
+    const string ShownKey = "cw_xp_shown";
+
     public void RefreshProfile()
     {
-        int totalXP = ProgressManager.TotalXP;
-        int level = xpPerLevel > 0 ? (totalXP / xpPerLevel) + 1 : 1;
-        int intoLevel = xpPerLevel > 0 ? totalXP % xpPerLevel : 0;
+        int target = ProgressManager.TotalXP;
+        int shown = PlayerPrefs.GetInt(ShownKey, target);
+        if (isActiveAndEnabled && target > shown)
+        {
+            StopAllCoroutines();
+            StartCoroutine(AnimateXP(shown, target)); // fill up the gained XP
+        }
+        else
+        {
+            ApplyProfile(target);
+            PlayerPrefs.SetInt(ShownKey, target);
+        }
+    }
 
-        if (xpText) xpText.text = $"{totalXP:N0} XP";
+    // Sets the bar, XP text and level for a given XP amount.
+    void ApplyProfile(int xp)
+    {
+        int level = xpPerLevel > 0 ? (xp / xpPerLevel) + 1 : 1;
+        int intoLevel = xpPerLevel > 0 ? xp % xpPerLevel : 0;
+        if (xpText) xpText.text = $"{xp:N0} XP";
         if (levelText) levelText.text = level.ToString();
         if (xpBarFill) xpBarFill.fillAmount = xpPerLevel > 0 ? (float)intoLevel / xpPerLevel : 0f;
+    }
+
+    // Counts XP up from -> to over ~1s; the fill wraps naturally on level-up
+    // because the fraction is recomputed each frame.
+    System.Collections.IEnumerator AnimateXP(int from, int to)
+    {
+        const float dur = 1f;
+        for (float t = 0f; t < dur; t += Time.unscaledDeltaTime)
+        {
+            int xp = Mathf.RoundToInt(Mathf.Lerp(from, to, Mathf.SmoothStep(0f, 1f, t / dur)));
+            ApplyProfile(xp);
+            yield return null;
+        }
+        ApplyProfile(to);
+        PlayerPrefs.SetInt(ShownKey, to);
+        PlayerPrefs.Save();
     }
 
     // ---------------- Button handlers (OnClick targets) ----------------

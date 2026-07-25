@@ -79,6 +79,8 @@ public static class ProgressManager
     public static void ResetAll()
     {
         PlayerPrefs.DeleteKey("cw_xp");
+        PlayerPrefs.DeleteKey("cw_xp_shown"); // XP-bar animation baseline
+        PlayerPrefs.DeleteKey("cw_seen_level"); // level-up pulse baseline
         PlayerPrefs.DeleteKey("cw_unlocked");
         PlayerPrefs.DeleteKey("cw_tutorial_done"); // fresh save = all lessons replay
         PlayerPrefs.DeleteKey("cw_tut_loops");
