@@ -441,7 +441,7 @@ public class GameController : MonoBehaviour
         {
             _failedThisLevel = true;
             ui.SetStatusBad("The beacon was not reached.");
-            ui.ShowFail($"Sequence ended at {state.Position} - the beacon was not reached.", FailTip());
+            ui.ShowFail("AXIOM's sequence ended before reaching the beacon.", FailTip());
             ScanQueue(out bool sLoop, out bool sIf);
             AnalyticsLogger.LogRun(_challenge, _levelIndex, _level.levelName, "fail_incomplete", _attempts,
                 Time.time - _levelStartTime, _queue.Count, _level.optimalTokens, sLoop, sIf, _hintTier, 0);

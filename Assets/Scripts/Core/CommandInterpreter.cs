@@ -165,14 +165,14 @@ public static class CommandInterpreter
                             if (!state.InBounds(next))
                             {
                                 result.Failed = true;
-                                result.FailureReason = $"AXIOM stepped off the grid edge at {next}";
+                                result.FailureReason = "AXIOM stepped off the edge of the grid";
                                 result.Log.Add($"MOVE_FORWARD -> OFF GRID at {next}");
                                 return false;
                             }
                             if (state.Obstacles.Contains(next))
                             {
                                 result.Failed = true;
-                                result.FailureReason = $"AXIOM crashed into a corrupted block at {next}";
+                                result.FailureReason = "AXIOM crashed into a corrupted block";
                                 result.Log.Add($"MOVE_FORWARD -> BLOCKED by obstacle at {next}");
                                 return false;
                             }
