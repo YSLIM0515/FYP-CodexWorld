@@ -24,7 +24,7 @@ to work.
 | --- | --- |
 | Sequence Valley | First Steps, The Turn, Winding Path |
 | Loop Factory | Conveyor Run, Gear Steps, The Perimeter |
-| Logic Forest | Fork in the Woods, Shifting Maze, Null Virus Core |
+| Virus Nexus | Fork in the Woods, Shifting Maze, Null Virus Core |
 
 **Challenge mode** — unlocked after finishing all 9 beginner levels. Generates 5 procedural
 maps per run, different every time. Maps are drawn from five archetypes (Serpentine, Spiral,
