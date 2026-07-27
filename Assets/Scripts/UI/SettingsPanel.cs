@@ -142,17 +142,21 @@ public class SettingsPanel : MonoBehaviour
         }
     }
 
+    // A short, fixed set of common 16:9 window sizes instead of enumerating every
+    // mode the monitor reports (which produced a long, noisy list). All three fit
+    // within a 1080p display, so each is always selectable on a typical laptop.
+    static readonly Vector2Int[] CommonResolutions =
+    {
+        new Vector2Int(1280, 720),
+        new Vector2Int(1600, 900),
+        new Vector2Int(1920, 1080),
+    };
+
     void BuildResolutionOptions()
     {
         if (resolutionDropdown == null) return;
         _resolutions.Clear();
-        var seen = new HashSet<string>();
-        foreach (var r in Screen.resolutions)
-        {
-            string key = $"{r.width}x{r.height}";
-            if (seen.Add(key)) _resolutions.Add(new Vector2Int(r.width, r.height));
-        }
-        if (_resolutions.Count == 0) _resolutions.Add(new Vector2Int(1920, 1080));
+        _resolutions.AddRange(CommonResolutions);
 
         var options = new List<string>();
         foreach (var r in _resolutions) options.Add($"{r.x} x {r.y}");
