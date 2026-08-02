@@ -32,8 +32,20 @@ public class WelcomeScreen : MonoBehaviour
     // and Start never runs on an inactive GameObject.
     void Awake()
     {
+        // Listener first - Show() clears the field, and that has to reach
+        // RefreshStartButton to grey START out again.
+        if (nameInput) nameInput.onValueChanged.AddListener(_ => RefreshStartButton());
+
         if (playOnFirstRun && !GameProfile.HasProfile) Show();
         else Hide();
+    }
+
+    // START stays dead until there is a name to save, so the player gets an
+    // answer to their typing rather than a button that silently does nothing.
+    void RefreshStartButton()
+    {
+        if (startButton)
+            startButton.interactable = nameInput && !string.IsNullOrWhiteSpace(nameInput.text);
     }
 
     public void Show()
@@ -49,10 +61,12 @@ public class WelcomeScreen : MonoBehaviour
             nameInput.Select();
             nameInput.ActivateInputField();
         }
+        RefreshStartButton();
     }
 
-    // START button (OnClick). Blank is fine — GameProfile.Save() falls back to
-    // the default name.
+    // START button (OnClick). The button is only interactable once the field has
+    // a name, but GameProfile.Save() still falls back to the default if one ever
+    // slips through blank.
     public void Confirm()
     {
         GameProfile.Name = nameInput ? nameInput.text : "";
