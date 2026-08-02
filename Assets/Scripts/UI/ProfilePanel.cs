@@ -56,6 +56,9 @@ public class ProfilePanel : MonoBehaviour
     public void Open()
     {
         GameProfile.Load();
+        // Show the panel first: an InputField assigned while its GameObject is
+        // inactive keeps the value but never redraws its label, so it looks empty.
+        Root().SetActive(true);
         if (nameInput) nameInput.text = GameProfile.Name;
         SelectIcon(GameProfile.Icon);
         for (int i = 0; i < badgeToggles.Length; i++)
@@ -71,7 +74,6 @@ public class ProfilePanel : MonoBehaviour
             }
         }
 
-        Root().SetActive(true);
         transform.SetAsLastSibling();
     }
 
