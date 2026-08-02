@@ -50,6 +50,10 @@ public static class GameProfile
     public static int Icon;
     public static readonly List<int> Badges = new List<int>();
 
+    // False until the player saves a profile for the first time — drives the
+    // one-time welcome/name prompt.
+    public static bool HasProfile => PlayerPrefs.HasKey("cw_prof_name");
+
     public static bool BadgeUnlocked(int badge) =>
         badge >= 0 && badge < BadgeAchievements.Length && AchievementManager.IsUnlocked(BadgeAchievements[badge]);
 

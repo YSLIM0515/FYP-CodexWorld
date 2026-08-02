@@ -41,13 +41,38 @@ public class ProfilePanel : MonoBehaviour
     public Image[] cardBadgeSlots;
     public Text[] cardBadgeGlyphs;
 
+    [Header("First run")]
+    [Tooltip("Panel title - swapped for the welcome line the first time the game is played.")]
+    public Text titleText;
+    public string welcomeTitle = "WELCOME, CODER!";
+
     int _selectedIcon;
+    string _defaultTitle;
+    bool _firstRun;
 
     void Awake()
     {
         GameProfile.Load();
+        if (titleText) _defaultTitle = titleText.text;
         RefreshCard();
         Hide();
+    }
+
+    // No profile saved yet: greet the player and ask for a name before they play.
+    // When the intro cutscene lands, drop this Start() and call OpenWelcome()
+    // from the end of the cutscene instead.
+    void Start()
+    {
+        if (!GameProfile.HasProfile) OpenWelcome();
+    }
+
+    // Open() already pre-fills the field with GameProfile.Name, which is
+    // DefaultName ("CODE_MASTER") while nothing is saved.
+    public void OpenWelcome()
+    {
+        _firstRun = true;
+        Open();
+        if (titleText) titleText.text = welcomeTitle;
     }
 
     // ---------------- OnClick targets ----------------
@@ -77,8 +102,20 @@ public class ProfilePanel : MonoBehaviour
         transform.SetAsLastSibling();
     }
 
-    // BACK button: discard edits and return to the main menu.
-    public void Close() => Hide();
+    // BACK button: discard edits and return to the main menu. On the first run
+    // there is nothing to fall back to, so keep the default name — otherwise the
+    // welcome prompt would reappear on every launch.
+    public void Close()
+    {
+        if (_firstRun) { GameProfile.Save(); RefreshCard(); EndFirstRun(); }
+        Hide();
+    }
+
+    void EndFirstRun()
+    {
+        _firstRun = false;
+        if (titleText) titleText.text = _defaultTitle;
+    }
 
     // Icon option buttons pass their index as the OnClick int argument.
     public void SelectIcon(int index)
@@ -105,6 +142,7 @@ public class ProfilePanel : MonoBehaviour
 
         GameProfile.Save();
         RefreshCard();
+        EndFirstRun();
         Hide();
     }
 
