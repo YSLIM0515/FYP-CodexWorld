@@ -45,15 +45,20 @@ public class ProfilePanel : MonoBehaviour
     [Tooltip("Panel title - swapped for the welcome line the first time the game is played.")]
     public Text titleText;
     public string welcomeTitle = "WELCOME, CODER!";
+    [Tooltip("Label above the name field - becomes the greeting's question on the first run.")]
+    public Text namePromptText;
+    public string welcomePrompt = "WHAT SHOULD WE CALL YOU?";
 
     int _selectedIcon;
     string _defaultTitle;
+    string _defaultPrompt;
     bool _firstRun;
 
     void Awake()
     {
         GameProfile.Load();
         if (titleText) _defaultTitle = titleText.text;
+        if (namePromptText) _defaultPrompt = namePromptText.text;
         RefreshCard();
         Hide();
     }
@@ -73,6 +78,7 @@ public class ProfilePanel : MonoBehaviour
         _firstRun = true;
         Open();
         if (titleText) titleText.text = welcomeTitle;
+        if (namePromptText) namePromptText.text = welcomePrompt;
     }
 
     // ---------------- OnClick targets ----------------
@@ -115,6 +121,7 @@ public class ProfilePanel : MonoBehaviour
     {
         _firstRun = false;
         if (titleText) titleText.text = _defaultTitle;
+        if (namePromptText) namePromptText.text = _defaultPrompt;
     }
 
     // Icon option buttons pass their index as the OnClick int argument.
