@@ -1,87 +1,87 @@
-# Challenge Mode — Design & Implementation Plan
+# Challenge Mode
 
-Codex World's second game mode (entered from PLAY > CHALLENGE MODE, `cw_mode = 1`).
-Five procedurally generated maps per run — different on every click — that test
-everything learned in Beginner Mode. Planned 2026-07; see phases at the bottom.
+Second mode, reached from PLAY > CHALLENGE MODE (`cw_mode = 1`). Five generated
+maps per run, different every time. Written up in July 2026, before building it.
 
-## Why it fits the architecture
+## Why it drops in cleanly
 
-`LevelDefinition.BuildGridState()` scans the level root's children at runtime:
-ground tiles under "Tiles" define bounds, `CellMarker` components define
-obstacles / goal / spawn. The interpreter, star scoring and win/fail flow all
-consume that scan. **A generator therefore only has to spawn tiles + markers
-under a level root — all existing game logic works unchanged.**
+`LevelDefinition.BuildGridState()` reads the level root's children at runtime:
+ground tiles under "Tiles" set the bounds, `CellMarker` components mark obstacles,
+goal and spawn. Everything downstream — interpreter, star scoring, win/fail flow —
+works off that scan. So a generator only has to spawn tiles and markers under a
+level root, and the existing game logic needs no changes at all.
 
-## Generator design
+## Generator
 
-- **Carve-first:** random-walk a guaranteed route from spawn to beacon (biased
-  to produce straight runs and turns), add dead-end branches, fill with
-  obstacles to a target density, BFS-validate as a safety net (retry cap).
-- **Dual-optimal validation (the "combined" guarantee):** BFS over
-  (position, facing) states computes two optimal token counts —
-  `fullOptimal` (loops + IFs allowed) and `sequenceOnlyOptimal` (moves/turns only).
-  A map is accepted only if `sequenceOnlyOptimal > budget >= fullOptimal`,
-  so a plain sequence cannot fit the command budget: loops/conditionals are
-  mandatory, not optional.
-- **Seed per run:** new seed on every PLAY click; shown on the HUD
-  ("MAP SEED: 4F2A9") so runs can be shared/reproduced.
+Carve first: random-walk a route from spawn to beacon, biased towards straight runs
+and turns, then add dead-end branches and fill obstacles to a target density. BFS
+validates solvability as a backstop, with a retry cap.
 
-## Difficulty: hard and combined (no ramp)
+The part that matters is the budget guarantee. A BFS over (position, facing) gives
+two optimal token counts: `fullOptimal` with loops and IFs allowed, and
+`sequenceOnlyOptimal` with only moves and turns. A map is accepted only when
 
-All five maps are exam-level (9x9–11x11, all commands, tight budget). Variety
-comes from shuffled shape archetypes, not difficulty tiers:
+    sequenceOnlyOptimal > budget >= fullOptimal
 
-1. **Serpentine** — repeated S-bends; nested-loop territory.
-2. **Spiral** — shrinking repetition; loop off-by-one traps.
-3. **Minefield** — obstacles on the ideal line; IF-branching beats hand dodging.
-4. **Liar's maze** — plausible dead ends; punishes queue-and-pray.
-5. **Gauntlet** — all motifs combined.
+so a flat sequence cannot fit inside the budget. That makes loops and conditionals
+mandatory rather than merely more efficient, which is the whole point of the mode.
 
-Pressure levers (use 2–3, not all): failed run costs a star; no TIP text on the
-fail panel (only where the run ended); optional run timer -> `cw_challenge_best`.
-HCI rule: difficulty must come from reasoning depth, never information hiding —
-grid fully visible, budget and star rules stated up front.
+Every run gets a fresh seed, shown on the HUD, so a run can be reproduced or shared.
 
-**Stars per map:** 1* complete within budget · 2* <= optimal+1 tokens ·
-3* exact optimal with no failed run.
+## Difficulty
 
-## Hint system (fairness)
+No ramp — all five maps are exam level (9x9 to 11x11, every command available, tight
+budget). Variety comes from shuffling shape archetypes instead:
 
-All hints derive from the solver output the generator already computes.
+1. Serpentine — repeated S-bends, nested-loop territory
+2. Spiral — shrinking repetition, off-by-one traps
+3. Minefield — obstacles on the ideal line, where IF beats dodging by hand
+4. Liar's maze — plausible dead ends, punishes queue-and-pray
+5. Gauntlet — all of the above at once
 
-1. **Three-tier ladder per map** (progressive disclosure):
-   - Tier 1 *spatial* — optimal route tiles glow ~3 s, then fade.
-   - Tier 2 *structural* — reveal the skeleton: "Optimal: 11 tokens — 2 loops, 1 IF."
-   - Tier 3 *partial answer* — auto-fill the first 3–4 optimal commands.
-2. **3 hint tokens per 5-map run** — any tier costs one token (scarcity = strategy).
-3. **Adaptive free hint** — 2 failed runs on the same map offers a free Tier 1
-   ("Struggling? First hint is free"). Rescues stuck players only.
-4. **Cost = stars, never completion** — any hint caps that map at 2*, stated on
-   the button before use. Completion is always possible; 3* stays unaided mastery.
+Pressure levers, pick two or three rather than all: a failed run costs a star; no tip
+text on the fail panel, only where the run ended; optional run timer into
+`cw_challenge_best`.
 
-UI: HINT button + token badge in the command panel; tier picker with costs;
-fail panel gains a USE HINT shortcut when the free hint triggers.
+Difficulty has to come from reasoning depth, never from hiding information. The grid
+stays fully visible and the budget and star rules are stated up front.
 
-## Progress & scoring isolation
+Stars: 1 for completing within budget, 2 for optimal+1 or better, 3 for exact optimal
+with no failed run.
 
-- Challenge runs are roguelike: no `cw_done_*` / `cw_bonus_*` writes
-  (guard `ProgressManager.CompleteLevel` behind `cw_mode == 0`).
-- Persist only `cw_challenge_best` (maps cleared, total time).
-- Beginner achievements unaffected; challenge achievements possible later.
+## Hints
 
-## Build phases
+All three tiers come out of solver output the generator already computes.
 
-1. **Generator core** — `ChallengeMapGenerator` (pure C#, seeded): carve +
-   decorate + dual-optimal BFS solver/validator; returns 5 map models.
-2. **Runtime level builder** — instantiate level root + `LevelDefinition` +
-   tiles + `CellMarker`s from a model, cloning visuals/materials (R2_/R3_) from
-   an existing level.
-3. **GameController branch + hints + UI** — `cw_mode == 1` swaps in generated
-   levels; command budget enforcement; hint ladder/tokens/free-hint/star cap;
-   "CHALLENGE n / 5 | SEED xxxx" top bar; NEXT MAP / CHALLENGE COMPLETE panels.
-4. **Balance harness** — editor menu item generating ~200 maps per archetype,
-   logging solvability %, path length and optimal-token spread to tune density.
+- Tier 1, spatial — the optimal route glows for about 3 seconds, then fades
+- Tier 2, structural — the skeleton, e.g. "Optimal: 11 tokens, 2 loops, 1 IF"
+- Tier 3, partial answer — the first three or four optimal commands get filled in
 
-Risks: degenerate maps (validator + retry cap), camera framing on 11x11
-(GodViewCamera may need per-map bounds fit), generation time (negligible at
-this grid size).
+Three hint tokens per five-map run, any tier costs one, so spending them is itself a
+decision. Two failed runs on the same map offers a free tier 1 for players who are
+properly stuck.
+
+Any hint caps that map at 2 stars, and the button says so before you press it. Hints
+cost stars, never completion — finishing is always possible, and 3 stars stays unaided.
+
+## Progress isolation
+
+Challenge runs are roguelike: no `cw_done_*` or `cw_bonus_*` writes, so
+`ProgressManager.CompleteLevel` is guarded behind `cw_mode == 0`. Only
+`cw_challenge_best` persists (maps cleared, total time). Beginner achievements are
+untouched; challenge-specific ones could come later.
+
+## Order of work
+
+1. `ChallengeMapGenerator` — pure seeded C#: carve, decorate, dual-optimal BFS solver
+   and validator, returns five map models
+2. Runtime builder — level root, `LevelDefinition`, tiles and `CellMarker`s built from
+   a model, cloning visuals and materials from an existing level
+3. `GameController` branch — generated levels under `cw_mode == 1`, budget enforcement,
+   hint ladder and tokens, seed in the top bar, NEXT MAP and CHALLENGE COMPLETE panels
+4. Balance harness — editor menu item that generates ~200 maps per archetype and logs
+   solvability rate, path length and optimal-token spread, to tune density
+
+Things that could bite: degenerate maps, which the validator and retry cap should
+cover, and camera framing at 11x11 — `GodViewCamera` may need a per-map bounds fit.
+Generation time is not a concern at this grid size.
