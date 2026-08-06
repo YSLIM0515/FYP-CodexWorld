@@ -35,6 +35,10 @@
 /[Aa]ssets/[Ss]creenshots/
 /[Aa]ssets/[Ss]creenshots.meta
 
+# HyperFrames demo-video projects - hundreds of MB of masters and renders,
+# all rebuildable from the source captures in Videos\NVIDIA.
+/[Vv]ideos/
+
 # Uncomment this line if you wish to ignore the asset store tools plugin
 # /[Aa]ssets/AssetStoreTools*
 
