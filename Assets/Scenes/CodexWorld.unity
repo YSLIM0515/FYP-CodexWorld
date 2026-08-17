@@ -43382,6 +43382,7 @@ GameObject:
   m_Component:
   - component: {fileID: 890775167}
   - component: {fileID: 890775166}
+  - component: {fileID: 890775168}
   m_Layer: 0
   m_Name: GameController
   m_TagString: Untagged
@@ -97758,3 +97759,17 @@ SceneRoots:
   - {fileID: 890775167}
   - {fileID: 1056139225}
   - {fileID: 1276534540}
+--- !u!114 &890775168
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 890775165}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40549b424dbd20046852f6c99fff9afd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PresenterKeys
+  controller: {fileID: 890775166}
+  shortcutsEnabled: 1

@@ -11,6 +11,7 @@ public class ChallengeMap
     public HashSet<Vector2Int> Obstacles = new HashSet<Vector2Int>();
     public List<Vector2Int> Path = new List<Vector2Int>();   // optimal route cells (for the glow hint)
     public List<CommandToken> Solution = new List<CommandToken>(); // compressed optimal program
+    public List<CommandType> Flat = new List<CommandType>();  // the same route before compression
     public int OptimalTokens;   // compressed token count (3-star target)
     public int SequenceTokens;  // flat move/turn token count (must exceed Budget)
     public int Budget;          // hard command limit per run
@@ -180,7 +181,21 @@ public static class ChallengeGenerator
     static readonly Vector2Int[] Dirs = { new Vector2Int(0, 1), new Vector2Int(1, 0), new Vector2Int(0, -1), new Vector2Int(-1, 0) };
 
     // Fills Path / Solution / token counts. False when unreachable.
-    static bool Solve(ChallengeMap m)
+    // The three actions cost one command each, so BFS stays optimal whatever order
+    // they are expanded in - but the *shape* of the route it finds changes, and a
+    // more regular route compresses into fewer loop tokens. Trying every order and
+    // keeping the best compression costs six cheap searches on an 11x11 grid.
+    // 0 = move forward, 1 = turn left, 2 = turn right.
+    static readonly int[][] ExpandOrders =
+    {
+        new[] { 0, 1, 2 }, new[] { 0, 2, 1 }, new[] { 1, 0, 2 },
+        new[] { 1, 2, 0 }, new[] { 2, 0, 1 }, new[] { 2, 1, 0 },
+    };
+
+    // Generation keeps the original expansion order, so generated maps are unchanged.
+    static bool Solve(ChallengeMap m) => Solve(m, 0);
+
+    static bool Solve(ChallengeMap m, int order)
     {
         int W = m.Width, H = m.Height;
         int States = W * H * 4;
@@ -200,18 +215,31 @@ public static class ChallengeGenerator
         {
             var (p, f) = q.Dequeue();
             int cur = Idx(p, f);
-            // move
-            var np = p + Dirs[f];
-            if (np.x >= 0 && np.x < W && np.y >= 0 && np.y < H && !m.Obstacles.Contains(np) && prev[Idx(np, f)] < 0)
+            bool reachedGoal = false;
+            foreach (int act in ExpandOrders[order])
             {
-                prev[Idx(np, f)] = cur; prevCmd[Idx(np, f)] = CommandType.MoveForward;
-                if (np == m.Goal) { goalIdx = Idx(np, f); break; }
-                q.Enqueue((np, f));
+                if (act == 0) // move forward
+                {
+                    var np = p + Dirs[f];
+                    if (np.x >= 0 && np.x < W && np.y >= 0 && np.y < H && !m.Obstacles.Contains(np) && prev[Idx(np, f)] < 0)
+                    {
+                        prev[Idx(np, f)] = cur; prevCmd[Idx(np, f)] = CommandType.MoveForward;
+                        if (np == m.Goal) { goalIdx = Idx(np, f); reachedGoal = true; break; }
+                        q.Enqueue((np, f));
+                    }
+                }
+                else // turn left (1) or right (2)
+                {
+                    int nf = act == 1 ? (f + 3) % 4 : (f + 1) % 4;
+                    if (prev[Idx(p, nf)] < 0)
+                    {
+                        prev[Idx(p, nf)] = cur;
+                        prevCmd[Idx(p, nf)] = act == 1 ? CommandType.TurnLeft : CommandType.TurnRight;
+                        q.Enqueue((p, nf));
+                    }
+                }
             }
-            // turns
-            int lf = (f + 3) % 4, rf = (f + 1) % 4;
-            if (prev[Idx(p, lf)] < 0) { prev[Idx(p, lf)] = cur; prevCmd[Idx(p, lf)] = CommandType.TurnLeft; q.Enqueue((p, lf)); }
-            if (prev[Idx(p, rf)] < 0) { prev[Idx(p, rf)] = cur; prevCmd[Idx(p, rf)] = CommandType.TurnRight; q.Enqueue((p, rf)); }
+            if (reachedGoal) break;
         }
         if (goalIdx < 0) return false;
 
@@ -231,11 +259,55 @@ public static class ChallengeGenerator
         cells.Reverse();
 
         m.Path = cells;
+        m.Flat = flat;
         m.SequenceTokens = flat.Count;
         m.Solution = Compress(flat);
         m.OptimalTokens = m.Solution.Count;
         m.Budget = m.OptimalTokens + BudgetSlack;
         return true;
+    }
+
+    // Solves any grid with the same BFS + loop compression the generator uses,
+    // so a hand-authored beginner level can be solved too. Returns null when the
+    // beacon is unreachable. allowLoops=false hands back the flat route, which is
+    // what a Sequence Valley level's palette can actually express.
+    public static List<CommandToken> SolveGrid(GridState grid, bool allowLoops)
+    {
+        // Without loops every route of minimum length costs the same, so one
+        // search is enough. With loops the route's shape decides how well it
+        // compresses, so try each expansion order and keep the shortest program.
+        int orders = allowLoops ? ExpandOrders.Length : 1;
+        List<CommandToken> best = null;
+
+        for (int order = 0; order < orders; order++)
+        {
+            var m = new ChallengeMap
+            {
+                Width = grid.Width,
+                Height = grid.Height,
+                Spawn = grid.Position,
+                SpawnFacing = grid.Facing,
+                Goal = grid.GoalPosition
+            };
+            foreach (var cell in grid.Obstacles) m.Obstacles.Add(cell);
+
+            if (!Solve(m, order)) return null; // unreachable regardless of order
+
+            List<CommandToken> candidate;
+            if (allowLoops)
+            {
+                candidate = m.Solution;
+            }
+            else
+            {
+                candidate = new List<CommandToken>();
+                foreach (var c in m.Flat) candidate.Add(CommandToken.Simple(c));
+            }
+
+            if (best == null || candidate.Count < best.Count) best = candidate;
+        }
+
+        return best;
     }
 
 

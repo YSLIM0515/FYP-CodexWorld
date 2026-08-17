@@ -220,6 +220,58 @@ public class GameController : MonoBehaviour
         LoadLevel(target);
     }
 
+    // ---------------- Presentation shortcuts ----------------
+    // Driven by PresenterKeys, never wired to a button. They exist so a level can
+    // be solved on demand during a timed presentation.
+
+    // Fills the queue with a correct program for the current level. Challenge maps
+    // already carry the solver's compressed answer; beginner levels are authored,
+    // so they get solved on the spot with the same BFS + compression.
+    public void AutoSolve()
+    {
+        if (_isRunning || _level == null) return;
+
+        var solution = SolutionForCurrentLevel();
+        if (solution == null || solution.Count == 0)
+        {
+            ui.SetStatusBad("Auto-solve: no route to the beacon on this level.");
+            return;
+        }
+
+        _queue.Clear();
+        _queue.AddRange(solution);
+        UpdateQueueText();
+
+        // Say up front what this will score, so a 2-star result is never a
+        // surprise mid-presentation. The third star also needs no failed run here.
+        if (_queue.Count > _level.optimalTokens)
+            ui.SetStatusBad($"Auto-solve: {_queue.Count} blocks, optimal is {_level.optimalTokens} - this will score 2 stars.");
+        else if (_failedThisLevel)
+            ui.SetStatus($"Auto-solve: {_queue.Count} blocks (optimal). A failed run on this level caps it at 2 stars.");
+        else
+            ui.SetStatusGood($"Auto-solve: {_queue.Count} blocks - optimal, 3 stars. Press RUN.");
+    }
+
+    // Same, then runs it - one key to take a level from empty to solved.
+    public void AutoSolveAndRun()
+    {
+        if (_isRunning) return;
+        AutoSolve();
+        if (_queue.Count > 0) Run();
+    }
+
+    List<CommandToken> SolutionForCurrentLevel()
+    {
+        // Challenge maps were generated with their solution attached.
+        var data = _level.GetComponent<ChallengeLevelData>();
+        if (data != null && data.Map != null) return new List<CommandToken>(data.Map.Solution);
+
+        // Beginner levels are hand-authored, so solve the grid now. Levels that
+        // have not unlocked loops yet get the flat route instead of a LOOP block.
+        var grid = _level.BuildGridState(out _, out _);
+        return ChallengeGenerator.SolveGrid(grid, _level.allowLoops);
+    }
+
     public void ResetSave()
     {
         if (_isRunning || _challenge) return; // challenge runs never touch the save
