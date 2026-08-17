@@ -1,9 +1,4 @@
 // Codex World — Learning analytics logger
-// Appends one CSV row per run (win or fail) to codexworld_analytics.csv in
-// Application.persistentDataPath. Data feeds the FYP evaluation chapter:
-// attempts per level, solve time, token counts vs optimal, loop/IF adoption,
-// hint usage and star ratings. Fails silently (a full disk must never break
-// gameplay); the file can be opened directly in Excel.
 
 using System.IO;
 using UnityEngine;
