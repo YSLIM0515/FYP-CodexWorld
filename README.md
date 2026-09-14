@@ -150,12 +150,10 @@ generator scripts (the old builder tooling has been removed).
 
 ## Asset licences
 
-`Assets/Design/Fonts/pixel.ttf` ("Pixel" by krolesz94, via FontStruct) is licensed
-**non-commercial, no redistribution** — see `license.txt` beside it. Using it in this project
-is fine and clause 2.5 permits embedding a subset in a built player, but clause 2.3 forbids
-making the font file available to third parties. **This repository must therefore stay
-private.** Publishing it, or adding collaborators, would redistribute the font; swap in an
-OFL-licensed pixel font first if the project ever needs to go public.
+The UI uses Unity's built-in font. An earlier pixel font (`pixel.ttf`, FontStruct licence:
+non-commercial, **no redistribution**) has been removed from the project, but it is still in
+the git history. **Keep this repository private**, or rewrite that history first, if it ever
+needs to go public.
 
 ## Known gaps
 
